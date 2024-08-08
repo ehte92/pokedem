@@ -1,4 +1,3 @@
-"use client";
 import React, { useState, useMemo, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,8 +24,10 @@ import {
   fetchEvolutionChain,
   fetchPokemonDetails,
   fetchPokemonList,
+  searchPokemon,
 } from "@/lib/api";
 import PokemonListCard from "./pokemon-list-card";
+import { Search } from "lucide-react";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -37,6 +38,7 @@ const Pokedex: React.FC = () => {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterAbility, setFilterAbility] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -48,6 +50,20 @@ const Pokedex: React.FC = () => {
     ["pokemonList", currentPage],
     () => fetchPokemonList(currentPage, ITEMS_PER_PAGE),
     { keepPreviousData: true }
+  );
+
+  const {
+    data: searchResults,
+    status: searchStatus,
+    refetch: refetchSearch,
+  } = useQuery<PokemonListItem[]>(
+    ["pokemonSearch", searchTerm],
+    () => searchPokemon(searchTerm),
+    {
+      enabled: false,
+      onSuccess: () => setIsSearching(true),
+      onError: () => setIsSearching(false),
+    }
   );
 
   const { data: pokemonDetails, status: detailStatus } =
@@ -70,10 +86,20 @@ const Pokedex: React.FC = () => {
 
   const handleSearch = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchTerm(event.target.value);
-      setCurrentPage(1); // Reset to first page when searching
+      const value = event.target.value;
+      setSearchTerm(value);
     },
     []
+  );
+
+  const handleSearchSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (searchTerm.length >= 2) {
+        refetchSearch();
+      }
+    },
+    [searchTerm, refetchSearch]
   );
 
   const toggleFavorite = useCallback((pokemonId: number) => {
@@ -84,12 +110,12 @@ const Pokedex: React.FC = () => {
     );
   }, []);
 
-  const filteredPokemon = useMemo(() => {
-    if (!pokemonListData) return [];
-    return pokemonListData.results.filter((pokemon: PokemonListItem) =>
-      pokemon.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [pokemonListData, searchTerm]);
+  const displayedPokemon = useMemo(() => {
+    if (isSearching && searchResults) {
+      return searchResults;
+    }
+    return pokemonListData?.results || [];
+  }, [isSearching, searchResults, pokemonListData]);
 
   const totalPages = useMemo(() => {
     if (!pokemonListData) return 0;
@@ -119,14 +145,25 @@ const Pokedex: React.FC = () => {
         Pokédex
       </h1>
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 mb-8 shadow-lg">
-        <div className="flex flex-wrap gap-4 mb-4">
-          <Input
-            type="text"
-            placeholder="Search Pokémon"
-            value={searchTerm}
-            onChange={handleSearch}
-            className="flex-grow pixel-text bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200"
-          />
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex flex-wrap gap-4 mb-4"
+        >
+          <div className="flex-grow flex items-center">
+            <Input
+              type="text"
+              placeholder="Search Pokémon"
+              value={searchTerm}
+              onChange={handleSearch}
+              className="flex-grow pixel-text bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-l-md text-gray-800 dark:text-gray-200"
+            />
+            <Button
+              type="submit"
+              className="pixel-text bg-blue-500 hover:bg-blue-600 text-white rounded-r-md ml-2"
+            >
+              <Search size={20} />
+            </Button>
+          </div>
           <Select value={filterType} onValueChange={setFilterType}>
             <SelectTrigger className="w-[180px] pixel-text bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200">
               <SelectValue placeholder="Filter by Type" />
@@ -140,7 +177,6 @@ const Pokedex: React.FC = () => {
               ))}
             </SelectContent>
           </Select>
-
           <Select value={filterAbility} onValueChange={setFilterAbility}>
             <SelectTrigger className="w-[180px] pixel-text bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200">
               <SelectValue placeholder="Filter by Ability" />
@@ -154,15 +190,15 @@ const Pokedex: React.FC = () => {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </form>
       </div>
 
-      {listStatus === "loading" ? (
+      {listStatus === "loading" || searchStatus === "loading" ? (
         <LoadingIndicator />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredPokemon.map((pokemon) => (
+            {displayedPokemon.map((pokemon) => (
               <PokemonListCard
                 key={pokemon.name}
                 pokemon={pokemon}
@@ -170,39 +206,41 @@ const Pokedex: React.FC = () => {
               />
             ))}
           </div>
-          <div className="mt-8 flex flex-wrap justify-center items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
-            <Button
-              onClick={goToFirstPage}
-              disabled={currentPage === 1}
-              className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
-            >
-              First
-            </Button>
-            <Button
-              onClick={goToPreviousPage}
-              disabled={currentPage === 1}
-              className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
-            >
-              Previous
-            </Button>
-            <span className="pixel-text text-lg text-gray-800 dark:text-gray-200">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              onClick={goToNextPage}
-              disabled={isPreviousData || currentPage === totalPages}
-              className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
-            >
-              Next
-            </Button>
-            <Button
-              onClick={goToLastPage}
-              disabled={currentPage === totalPages}
-              className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
-            >
-              Last
-            </Button>
-          </div>
+          {!isSearching && (
+            <div className="mt-8 flex flex-wrap justify-center items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
+              <Button
+                onClick={goToFirstPage}
+                disabled={currentPage === 1}
+                className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                First
+              </Button>
+              <Button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                Previous
+              </Button>
+              <span className="pixel-text text-lg text-gray-800 dark:text-gray-200">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                onClick={goToNextPage}
+                disabled={isPreviousData || currentPage === totalPages}
+                className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                Next
+              </Button>
+              <Button
+                onClick={goToLastPage}
+                disabled={currentPage === totalPages}
+                className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                Last
+              </Button>
+            </div>
+          )}
         </>
       )}
 
