@@ -96,6 +96,15 @@ const Pokedex: React.FC = () => {
     return Math.ceil(pokemonListData.count / ITEMS_PER_PAGE);
   }, [pokemonListData]);
 
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () => setCurrentPage((old) => Math.max(old - 1, 1));
+  const goToNextPage = () => {
+    if (!isPreviousData && currentPage < totalPages) {
+      setCurrentPage((old) => old + 1);
+    }
+  };
+
   if (listStatus === "error")
     return <ErrorComponent message="Failed to fetch Pokemon list" />;
 
@@ -104,7 +113,7 @@ const Pokedex: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="container mx-auto p-4 font-pixel  min-h-screen transition-colors duration-300"
+      className="container mx-auto p-4 font-pixel bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-300"
     >
       <h1 className="text-4xl font-bold mb-8 text-center text-blue-600 dark:text-blue-400 pixel-text uppercase drop-shadow-md">
         Pokédex
@@ -161,9 +170,16 @@ const Pokedex: React.FC = () => {
               />
             ))}
           </div>
-          <div className="mt-8 flex justify-between items-center bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
+          <div className="mt-8 flex flex-wrap justify-center items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
             <Button
-              onClick={() => setCurrentPage((old) => Math.max(old - 1, 1))}
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+              className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+            >
+              First
+            </Button>
+            <Button
+              onClick={goToPreviousPage}
               disabled={currentPage === 1}
               className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
             >
@@ -173,15 +189,18 @@ const Pokedex: React.FC = () => {
               Page {currentPage} of {totalPages}
             </span>
             <Button
-              onClick={() => {
-                if (!isPreviousData && currentPage < totalPages) {
-                  setCurrentPage((old) => old + 1);
-                }
-              }}
+              onClick={goToNextPage}
               disabled={isPreviousData || currentPage === totalPages}
               className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
             >
               Next
+            </Button>
+            <Button
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+              className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+            >
+              Last
             </Button>
           </div>
         </>
