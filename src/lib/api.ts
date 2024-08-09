@@ -1,7 +1,6 @@
 import { EvolutionChain, PokemonListItem } from "./types";
 
-export const fetchPokemonList = async (page: number, limit: number) => {
-  const offset = (page - 1) * limit;
+export const fetchPokemonList = async (offset: number, limit: number) => {
   const response = await fetch(
     `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`
   );
@@ -56,15 +55,14 @@ export const searchPokemon = async (
 };
 
 export const fetchPokemonByType = async (
-  type: string
-): Promise<PokemonListItem[]> => {
-  if (type === "all") {
-    return fetchPokemonList(1, 20);
-  }
+  type: string,
+  offset: number,
+  limit: number
+) => {
   const response = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch Pokemon by type");
-  }
+  if (!response.ok) throw new Error("Failed to fetch Pokemon by type");
   const data = await response.json();
-  return data.pokemon.map((p: { pokemon: PokemonListItem }) => p.pokemon);
+  return data.pokemon
+    .map((p: { pokemon: PokemonListItem }) => p.pokemon)
+    .slice(offset, offset + limit);
 };

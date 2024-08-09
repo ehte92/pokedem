@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient, useInfiniteQuery } from "react-query";
 import PokemonCard from "./pokemon-card";
 import {
   PokemonListItem,
@@ -37,26 +37,45 @@ const Pokedex: React.FC = () => {
   const [selectedPokemon, setSelectedPokemon] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [filterType, setFilterType] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
 
   const queryClient = useQueryClient();
 
   const {
     data: pokemonListData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     status: listStatus,
-    isPreviousData,
-  } = useQuery<PokemonListResponse>(
-    ["pokemonList", currentPage],
-    () => fetchPokemonList(currentPage, ITEMS_PER_PAGE),
-    { keepPreviousData: true }
+  } = useInfiniteQuery<PokemonListResponse>(
+    ["pokemonList", filterType],
+    ({ pageParam = 0 }) => fetchPokemonList(pageParam, ITEMS_PER_PAGE),
+    {
+      getNextPageParam: (lastPage, pages) => {
+        const nextOffset = pages.length * ITEMS_PER_PAGE;
+        return nextOffset < lastPage.count ? nextOffset : undefined;
+      },
+      enabled: filterType === "all",
+    }
   );
 
-  const { data: pokemonByType, status: typeStatus } = useQuery<
-    PokemonListItem[]
-  >(["pokemonByType", filterType], () => fetchPokemonByType(filterType), {
-    enabled: filterType !== "all",
-  });
+  const {
+    data: pokemonByType,
+    fetchNextPage: fetchNextTypePage,
+    hasNextPage: hasNextTypePage,
+    isFetchingNextPage: isFetchingNextTypePage,
+    status: typeStatus,
+  } = useInfiniteQuery<PokemonListItem[]>(
+    ["pokemonByType", filterType],
+    ({ pageParam = 0 }) =>
+      fetchPokemonByType(filterType, pageParam, ITEMS_PER_PAGE),
+    {
+      getNextPageParam: (lastPage, pages) => {
+        return lastPage.length === ITEMS_PER_PAGE ? pages.length : undefined;
+      },
+      enabled: filterType !== "all",
+    }
+  );
 
   const {
     data: searchResults,
@@ -118,7 +137,6 @@ const Pokedex: React.FC = () => {
 
   const handleTypeChange = useCallback((newType: string) => {
     setFilterType(newType);
-    setCurrentPage(1);
     setIsSearching(false);
     setSearchTerm("");
   }, []);
@@ -128,24 +146,20 @@ const Pokedex: React.FC = () => {
       return searchResults;
     }
     if (filterType !== "all" && pokemonByType) {
-      return pokemonByType;
+      return pokemonByType.pages.flat();
     }
-    return pokemonListData?.results || [];
+    return pokemonListData
+      ? pokemonListData.pages.flatMap((page) => page.results)
+      : [];
   }, [isSearching, searchResults, filterType, pokemonByType, pokemonListData]);
 
-  const totalPages = useMemo(() => {
-    if (!pokemonListData) return 0;
-    return Math.ceil(pokemonListData.count / ITEMS_PER_PAGE);
-  }, [pokemonListData]);
-
-  const goToFirstPage = () => setCurrentPage(1);
-  const goToLastPage = () => setCurrentPage(totalPages);
-  const goToPreviousPage = () => setCurrentPage((old) => Math.max(old - 1, 1));
-  const goToNextPage = () => {
-    if (!isPreviousData && currentPage < totalPages) {
-      setCurrentPage((old) => old + 1);
+  const loadMore = useCallback(() => {
+    if (filterType === "all") {
+      fetchNextPage();
+    } else {
+      fetchNextTypePage();
     }
-  };
+  }, [filterType, fetchNextPage, fetchNextTypePage]);
 
   if (listStatus === "error")
     return <ErrorComponent message="Failed to fetch Pokemon list" />;
@@ -211,41 +225,20 @@ const Pokedex: React.FC = () => {
               />
             ))}
           </div>
-          {!isSearching && filterType === "all" && (
-            <div className="mt-8 flex flex-wrap justify-center items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
-              <Button
-                onClick={goToFirstPage}
-                disabled={currentPage === 1}
-                className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
-              >
-                First
-              </Button>
-              <Button
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1}
-                className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
-              >
-                Previous
-              </Button>
-              <span className="pixel-text text-lg text-gray-800 dark:text-gray-200">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                onClick={goToNextPage}
-                disabled={isPreviousData || currentPage === totalPages}
-                className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
-              >
-                Next
-              </Button>
-              <Button
-                onClick={goToLastPage}
-                disabled={currentPage === totalPages}
-                className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
-              >
-                Last
-              </Button>
-            </div>
-          )}
+          {!isSearching &&
+            (filterType === "all" ? hasNextPage : hasNextTypePage) && (
+              <div className="mt-8 flex justify-center">
+                <Button
+                  onClick={loadMore}
+                  disabled={isFetchingNextPage || isFetchingNextTypePage}
+                  className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+                >
+                  {isFetchingNextPage || isFetchingNextTypePage
+                    ? "Loading..."
+                    : "Load More"}
+                </Button>
+              </div>
+            )}
         </>
       )}
 
