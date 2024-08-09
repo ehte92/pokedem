@@ -17,7 +17,7 @@ import {
   EvolutionChain,
   PokemonListResponse,
 } from "@/lib/types";
-import { POKEMON_TYPES, POKEMON_ABILITIES } from "@/lib/constants";
+import { POKEMON_TYPES } from "@/lib/constants";
 import ErrorComponent from "./error";
 import LoadingIndicator from "./loading-indicator";
 import {
@@ -37,7 +37,6 @@ const Pokedex: React.FC = () => {
   const [selectedPokemon, setSelectedPokemon] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [filterType, setFilterType] = useState<string>("all");
-  const [filterAbility, setFilterAbility] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -190,19 +189,6 @@ const Pokedex: React.FC = () => {
               {POKEMON_TYPES.map((type) => (
                 <SelectItem key={type} value={type.toLowerCase()}>
                   {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterAbility} onValueChange={setFilterAbility}>
-            <SelectTrigger className="w-[180px] pixel-text bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200">
-              <SelectValue placeholder="Filter by Ability" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Abilities</SelectItem>
-              {POKEMON_ABILITIES.map((ability) => (
-                <SelectItem key={ability} value={ability.toLowerCase()}>
-                  {ability}
                 </SelectItem>
               ))}
             </SelectContent>
