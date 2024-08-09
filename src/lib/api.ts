@@ -54,3 +54,17 @@ export const searchPokemon = async (
 
   return filteredPokemon;
 };
+
+export const fetchPokemonByType = async (
+  type: string
+): Promise<PokemonListItem[]> => {
+  if (type === "all") {
+    return fetchPokemonList(1, 20);
+  }
+  const response = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch Pokemon by type");
+  }
+  const data = await response.json();
+  return data.pokemon.map((p: { pokemon: PokemonListItem }) => p.pokemon);
+};

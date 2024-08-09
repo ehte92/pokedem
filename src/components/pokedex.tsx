@@ -25,6 +25,7 @@ import {
   fetchPokemonDetails,
   fetchPokemonList,
   searchPokemon,
+  fetchPokemonByType,
 } from "@/lib/api";
 import PokemonListCard from "./pokemon-list-card";
 import { Search } from "lucide-react";
@@ -51,6 +52,12 @@ const Pokedex: React.FC = () => {
     () => fetchPokemonList(currentPage, ITEMS_PER_PAGE),
     { keepPreviousData: true }
   );
+
+  const { data: pokemonByType, status: typeStatus } = useQuery<
+    PokemonListItem[]
+  >(["pokemonByType", filterType], () => fetchPokemonByType(filterType), {
+    enabled: filterType !== "all",
+  });
 
   const {
     data: searchResults,
@@ -110,12 +117,22 @@ const Pokedex: React.FC = () => {
     );
   }, []);
 
+  const handleTypeChange = useCallback((newType: string) => {
+    setFilterType(newType);
+    setCurrentPage(1);
+    setIsSearching(false);
+    setSearchTerm("");
+  }, []);
+
   const displayedPokemon = useMemo(() => {
     if (isSearching && searchResults) {
       return searchResults;
     }
+    if (filterType !== "all" && pokemonByType) {
+      return pokemonByType;
+    }
     return pokemonListData?.results || [];
-  }, [isSearching, searchResults, pokemonListData]);
+  }, [isSearching, searchResults, filterType, pokemonByType, pokemonListData]);
 
   const totalPages = useMemo(() => {
     if (!pokemonListData) return 0;
@@ -164,7 +181,7 @@ const Pokedex: React.FC = () => {
               <Search size={20} />
             </Button>
           </div>
-          <Select value={filterType} onValueChange={setFilterType}>
+          <Select value={filterType} onValueChange={handleTypeChange}>
             <SelectTrigger className="w-[180px] pixel-text bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200">
               <SelectValue placeholder="Filter by Type" />
             </SelectTrigger>
@@ -193,7 +210,9 @@ const Pokedex: React.FC = () => {
         </form>
       </div>
 
-      {listStatus === "loading" || searchStatus === "loading" ? (
+      {listStatus === "loading" ||
+      searchStatus === "loading" ||
+      typeStatus === "loading" ? (
         <LoadingIndicator />
       ) : (
         <>
@@ -206,7 +225,7 @@ const Pokedex: React.FC = () => {
               />
             ))}
           </div>
-          {!isSearching && (
+          {!isSearching && filterType === "all" && (
             <div className="mt-8 flex flex-wrap justify-center items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
               <Button
                 onClick={goToFirstPage}
