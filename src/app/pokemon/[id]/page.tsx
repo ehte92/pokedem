@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery } from 'react-query';
 
+import EvolutionChainComponent from '@/components/evolution-chain';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -124,7 +125,7 @@ const PokemonDetailPage = () => {
       species?.evolution_chain?.url
         ? fetchEvolutionChain(species.evolution_chain.url)
         : Promise.resolve({
-            chain: { species: { name: 'Unknown' }, evolves_to: [] },
+            chain: { species: { name: 'Unknown', url: '' }, evolves_to: [] },
           }),
     { enabled: !!species?.evolution_chain?.url }
   );
@@ -423,10 +424,12 @@ const PokemonDetailPage = () => {
 
       {/* Evolution Chain */}
       {!isEvolutionLoading && evolutionChain && (
-        <Card className="mt-8">
+        <Card className="overflow-hidden shadow-lg">
           <CardContent className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Evolution Chain</h2>
-            {/* Implement evolution chain visualization here */}
+            <h2 className="text-2xl font-semibold mb-4 text-center font-pixel text-gray-800 dark:text-gray-200">
+              Evolution Chain
+            </h2>
+            <EvolutionChainComponent chain={evolutionChain} />
           </CardContent>
         </Card>
       )}

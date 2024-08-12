@@ -87,6 +87,9 @@ const config = {
       scale: {
         '85': '0.85',
       },
+      borderWidth: {
+        '6': '6px',
+      },
     },
   },
   variants: {
