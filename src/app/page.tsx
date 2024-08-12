@@ -6,25 +6,44 @@ import Link from 'next/link';
 import { useQuery } from 'react-query';
 import Slider from 'react-slick';
 
-import { fetchPokemonDetails, fetchPokemonList } from '@/lib/api';
+import { fetchPokemonDetails } from '@/lib/api';
 import { typeColors } from '@/lib/constants';
-import {
-  PokemonDetails,
-  PokemonListItem,
-  PokemonListResponse,
-} from '@/lib/types';
+import { PokemonDetails } from '@/lib/types';
+
+// Assuming there are 898 Pokémon in total (up to Generation 8)
+const TOTAL_POKEMON = 898;
+const FEATURED_POKEMON_COUNT = 10;
+
+// Function to generate a list of random Pokémon IDs that changes daily
+const getRandomPokemonIds = () => {
+  const today = new Date().toDateString();
+  let seed = today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  const randomIds = new Set<number>();
+  const pseudoRandom = () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  };
+
+  while (randomIds.size < FEATURED_POKEMON_COUNT) {
+    const id = Math.floor(pseudoRandom() * TOTAL_POKEMON) + 1;
+    randomIds.add(id);
+  }
+
+  return Array.from(randomIds);
+};
 
 interface FeaturedPokemonProps {
-  pokemon: PokemonListItem;
+  pokemonId: number;
 }
 
-const FeaturedPokemon: React.FC<FeaturedPokemonProps> = ({ pokemon }) => {
+const FeaturedPokemon: React.FC<FeaturedPokemonProps> = ({ pokemonId }) => {
   const {
     data: details,
     isLoading,
     error,
-  } = useQuery<PokemonDetails, Error>(['pokemonDetails', pokemon.name], () =>
-    fetchPokemonDetails(pokemon.name)
+  } = useQuery<PokemonDetails, Error>(['pokemonDetails', pokemonId], () =>
+    fetchPokemonDetails(pokemonId.toString())
   );
 
   if (isLoading)
@@ -44,7 +63,7 @@ const FeaturedPokemon: React.FC<FeaturedPokemonProps> = ({ pokemon }) => {
         {imageUrl && (
           <img
             src={imageUrl}
-            alt={pokemon.name}
+            alt={details.name}
             className="w-full h-full object-contain"
           />
         )}
@@ -52,7 +71,7 @@ const FeaturedPokemon: React.FC<FeaturedPokemonProps> = ({ pokemon }) => {
       <div className="p-3 text-white">
         <div className="flex justify-between items-center mb-1">
           <h3 className="text-base font-semibold capitalize truncate">
-            {pokemon.name}
+            {details.name}
           </h3>
           <span className="text-sm text-gray-400">
             #{details.id.toString().padStart(3, '0')}
@@ -77,13 +96,7 @@ const FeaturedPokemon: React.FC<FeaturedPokemonProps> = ({ pokemon }) => {
 };
 
 const Home = () => {
-  const {
-    data: featuredPokemon,
-    isLoading,
-    error,
-  } = useQuery<PokemonListResponse, Error>('featuredPokemon', () =>
-    fetchPokemonList(0, 10)
-  );
+  const randomPokemonIds = React.useMemo(() => getRandomPokemonIds(), []);
 
   const settings = {
     dots: true,
@@ -133,26 +146,11 @@ const Home = () => {
         <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800 dark:text-gray-200">
           Featured Pokémon
         </h2>
-        {isLoading ? (
-          <div className="flex space-x-4">
-            {[...Array(5)].map((_, index) => (
-              <div
-                key={index}
-                className="animate-pulse bg-gray-300 dark:bg-gray-700 h-72 w-full rounded-lg"
-              ></div>
-            ))}
-          </div>
-        ) : error ? (
-          <p className="text-center text-red-500">
-            Error loading featured Pokémon
-          </p>
-        ) : (
-          <Slider {...settings}>
-            {featuredPokemon?.results.map((pokemon) => (
-              <FeaturedPokemon key={pokemon.name} pokemon={pokemon} />
-            ))}
-          </Slider>
-        )}
+        <Slider {...settings}>
+          {randomPokemonIds.map((id) => (
+            <FeaturedPokemon key={id} pokemonId={id} />
+          ))}
+        </Slider>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">

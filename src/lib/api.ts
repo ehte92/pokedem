@@ -1,16 +1,18 @@
-import { EvolutionChain, PokemonListItem } from "./types";
+import { EvolutionChain, PokemonDetails, PokemonListItem } from './types';
 
 export const fetchPokemonList = async (offset: number, limit: number) => {
   const response = await fetch(
     `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`
   );
-  if (!response.ok) throw new Error("Failed to fetch Pokemon list");
+  if (!response.ok) throw new Error('Failed to fetch Pokemon list');
   return response.json();
 };
 
-export const fetchPokemonDetails = async (name: string) => {
-  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
-  if (!response.ok) throw new Error("Failed to fetch Pokemon details");
+export const fetchPokemonDetails = async (
+  id: string
+): Promise<PokemonDetails> => {
+  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+  if (!response.ok) throw new Error('Failed to fetch Pokemon details');
   return response.json();
 };
 
@@ -21,14 +23,14 @@ export const fetchEvolutionChain = async (
     const speciesResponse = await fetch(
       `https://pokeapi.co/api/v2/pokemon-species/${id}`
     );
-    if (!speciesResponse.ok) throw new Error("Failed to fetch Pokemon species");
+    if (!speciesResponse.ok) throw new Error('Failed to fetch Pokemon species');
     const speciesData = await speciesResponse.json();
     const evolutionResponse = await fetch(speciesData.evolution_chain.url);
     if (!evolutionResponse.ok)
-      throw new Error("Failed to fetch evolution chain");
+      throw new Error('Failed to fetch evolution chain');
     return evolutionResponse.json();
   } catch (error) {
-    console.error("Error fetching evolution chain:", error);
+    console.error('Error fetching evolution chain:', error);
     return null;
   }
 };
@@ -38,10 +40,10 @@ export const searchPokemon = async (
 ): Promise<PokemonListItem[]> => {
   // Fetch a list of all Pokemon (limited to 1000 for performance reasons)
   const allPokemonResponse = await fetch(
-    "https://pokeapi.co/api/v2/pokemon?limit=1000"
+    'https://pokeapi.co/api/v2/pokemon?limit=1000'
   );
   if (!allPokemonResponse.ok) {
-    throw new Error("Failed to fetch Pokemon list");
+    throw new Error('Failed to fetch Pokemon list');
   }
   const allPokemonData = await allPokemonResponse.json();
 
@@ -60,7 +62,7 @@ export const fetchPokemonByType = async (
   limit: number
 ) => {
   const response = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
-  if (!response.ok) throw new Error("Failed to fetch Pokemon by type");
+  if (!response.ok) throw new Error('Failed to fetch Pokemon by type');
   const data = await response.json();
   return data.pokemon
     .map((p: { pokemon: PokemonListItem }) => p.pokemon)
