@@ -1,56 +1,53 @@
-import React from "react";
-import { PokemonListItem, PokemonDetails } from "@/lib/types";
-import Image from "next/image";
-import { useQuery } from "react-query";
-import { fetchPokemonDetails } from "@/lib/api";
+import React from 'react';
+
+import Image from 'next/image';
+import { useQuery } from 'react-query';
+
+import { fetchPokemonDetails } from '@/lib/api';
+import { PokemonDetails, PokemonListItem } from '@/lib/types';
 
 interface PokemonListCardProps {
   pokemon: PokemonListItem;
-  onClick: () => void;
 }
 
 const typeColors = {
-  normal: "#A8A878",
-  fire: "#F08030",
-  water: "#6890F0",
-  electric: "#F8D030",
-  grass: "#78C850",
-  ice: "#98D8D8",
-  fighting: "#C03028",
-  poison: "#A040A0",
-  ground: "#E0C068",
-  flying: "#A890F0",
-  psychic: "#F85888",
-  bug: "#A8B820",
-  rock: "#B8A038",
-  ghost: "#705898",
-  dragon: "#7038F8",
-  dark: "#705848",
-  steel: "#B8B8D0",
-  fairy: "#EE99AC",
+  normal: '#A8A878',
+  fire: '#F08030',
+  water: '#6890F0',
+  electric: '#F8D030',
+  grass: '#78C850',
+  ice: '#98D8D8',
+  fighting: '#C03028',
+  poison: '#A040A0',
+  ground: '#E0C068',
+  flying: '#A890F0',
+  psychic: '#F85888',
+  bug: '#A8B820',
+  rock: '#B8A038',
+  ghost: '#705898',
+  dragon: '#7038F8',
+  dark: '#705848',
+  steel: '#B8B8D0',
+  fairy: '#EE99AC',
 };
 
-const PokemonListCard: React.FC<PokemonListCardProps> = ({
-  pokemon,
-  onClick,
-}) => {
-  const pokemonId = pokemon.url.split("/")[6];
+const PokemonListCard: React.FC<PokemonListCardProps> = ({ pokemon }) => {
+  const pokemonId = pokemon.url.split('/')[6];
   const imageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
 
   const { data: pokemonDetails, isLoading } = useQuery<PokemonDetails>(
-    ["pokemonDetails", pokemonId],
+    ['pokemonDetails', pokemonId],
     () => fetchPokemonDetails(pokemonId),
     {
       staleTime: Infinity,
     }
   );
 
-  const mainType = pokemonDetails?.types[0]?.type.name || "normal";
-  const bgColor = typeColors[mainType as keyof typeof typeColors] || "#A8A878";
+  const mainType = pokemonDetails?.types[0]?.type.name || 'normal';
+  const bgColor = typeColors[mainType as keyof typeof typeColors] || '#A8A878';
 
   return (
     <div
-      onClick={onClick}
       className="relative w-64 h-96 m-4 rounded-xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:rotate-1 group font-pixel"
       style={{
         background: `linear-gradient(135deg, ${bgColor}99 0%, ${bgColor}44 100%)`,
@@ -71,7 +68,7 @@ const PokemonListCard: React.FC<PokemonListCardProps> = ({
             {pokemon.name}
           </h3>
           <p className="text-white text-opacity-90 text-xs font-bold bg-white bg-opacity-20 px-2 py-1 rounded pixel-text">
-            #{pokemonId.padStart(3, "0")}
+            #{pokemonId.padStart(3, '0')}
           </p>
         </div>
 
@@ -114,13 +111,13 @@ const PokemonListCard: React.FC<PokemonListCardProps> = ({
           <div className="text-center">
             <p className="text-[10px] pixel-text">HEIGHT</p>
             <p className="text-xs font-bold pixel-text">
-              {pokemonDetails?.height ?? "??"} m
+              {pokemonDetails?.height ?? '??'} m
             </p>
           </div>
           <div className="text-center">
             <p className="text-[10px] pixel-text">WEIGHT</p>
             <p className="text-xs font-bold pixel-text">
-              {pokemonDetails?.weight ?? "??"} kg
+              {pokemonDetails?.weight ?? '??'} kg
             </p>
           </div>
         </div>

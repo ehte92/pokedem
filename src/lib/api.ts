@@ -1,4 +1,10 @@
-import { EvolutionChain, PokemonDetails, PokemonListItem } from './types';
+import {
+  AbilityDetails,
+  EvolutionChain,
+  PokemonDetails,
+  PokemonListItem,
+  PokemonSpecies,
+} from './types';
 
 export const fetchPokemonList = async (offset: number, limit: number) => {
   const response = await fetch(
@@ -17,21 +23,21 @@ export const fetchPokemonDetails = async (
 };
 
 export const fetchEvolutionChain = async (
-  id: number
-): Promise<EvolutionChain | null> => {
+  url: string
+): Promise<EvolutionChain> => {
   try {
-    const speciesResponse = await fetch(
-      `https://pokeapi.co/api/v2/pokemon-species/${id}`
-    );
-    if (!speciesResponse.ok) throw new Error('Failed to fetch Pokemon species');
-    const speciesData = await speciesResponse.json();
-    const evolutionResponse = await fetch(speciesData.evolution_chain.url);
-    if (!evolutionResponse.ok)
-      throw new Error('Failed to fetch evolution chain');
-    return evolutionResponse.json();
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch evolution chain');
+    return response.json();
   } catch (error) {
     console.error('Error fetching evolution chain:', error);
-    return null;
+    // Return a default EvolutionChain object instead of null
+    return {
+      chain: {
+        species: { name: 'Unknown' },
+        evolves_to: [],
+      },
+    };
   }
 };
 
@@ -67,4 +73,24 @@ export const fetchPokemonByType = async (
   return data.pokemon
     .map((p: { pokemon: PokemonListItem }) => p.pokemon)
     .slice(offset, offset + limit);
+};
+
+export const fetchPokemonSpecies = async (
+  id: string | number
+): Promise<PokemonSpecies> => {
+  const response = await fetch(
+    `https://pokeapi.co/api/v2/pokemon-species/${id}`
+  );
+  if (!response.ok) throw new Error('Failed to fetch Pokemon species');
+  return response.json();
+};
+
+export const fetchAbilityDetails = async (
+  abilityName: string
+): Promise<AbilityDetails> => {
+  const response = await fetch(
+    `https://pokeapi.co/api/v2/ability/${abilityName}`
+  );
+  if (!response.ok) throw new Error('Failed to fetch ability details');
+  return response.json();
 };

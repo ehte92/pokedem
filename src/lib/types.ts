@@ -43,6 +43,7 @@ export interface PokemonDetails {
   stats: PokemonStat[];
   moves: PokemonMove[];
   sprites: PokemonSprites;
+  base_experience: number;
 }
 
 export interface PokemonListItem {
@@ -79,4 +80,26 @@ export interface EvolutionChain {
     };
     evolves_to: EvolutionTo[];
   };
+}
+
+export interface PokemonSpecies {
+  flavor_text_entries: {
+    flavor_text: string;
+    language: { name: string };
+    version: { name: string };
+  }[];
+  evolution_chain: { url: string };
+  // Add other fields as needed
+}
+
+export interface AbilityDetails {
+  effect_entries: {
+    effect: string;
+    language: {
+      name: string;
+      url: string;
+    };
+    short_effect: string;
+  }[];
+  // Add other fields as needed
 }

@@ -1,45 +1,33 @@
-import React, { useState, useMemo, useCallback } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { motion } from 'framer-motion';
+import { Search } from 'lucide-react';
+import Link from 'next/link';
+import { useInfiniteQuery, useQuery } from 'react-query';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { fetchPokemonByType, fetchPokemonList, searchPokemon } from '@/lib/api';
+import { POKEMON_TYPES } from '@/lib/constants';
+import { PokemonListItem, PokemonListResponse } from '@/lib/types';
+
+import ErrorComponent from './error';
+import LoadingIndicator from './loading-indicator';
+import PokemonListCard from './pokemon-list-card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { useQuery, useQueryClient, useInfiniteQuery } from "react-query";
-import PokemonCard from "./pokemon-card";
-import {
-  PokemonListItem,
-  PokemonDetails,
-  EvolutionChain,
-  PokemonListResponse,
-} from "@/lib/types";
-import { POKEMON_TYPES } from "@/lib/constants";
-import ErrorComponent from "./error";
-import LoadingIndicator from "./loading-indicator";
-import {
-  fetchEvolutionChain,
-  fetchPokemonDetails,
-  fetchPokemonList,
-  searchPokemon,
-  fetchPokemonByType,
-} from "@/lib/api";
-import PokemonListCard from "./pokemon-list-card";
-import { Search } from "lucide-react";
+} from './ui/select';
 
 const ITEMS_PER_PAGE = 20;
 
 const Pokedex: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedPokemon, setSelectedPokemon] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [filterType, setFilterType] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>('all');
   const [isSearching, setIsSearching] = useState(false);
-
-  const queryClient = useQueryClient();
 
   const {
     data: pokemonListData,
@@ -48,14 +36,14 @@ const Pokedex: React.FC = () => {
     isFetchingNextPage,
     status: listStatus,
   } = useInfiniteQuery<PokemonListResponse>(
-    ["pokemonList", filterType],
+    ['pokemonList', filterType],
     ({ pageParam = 0 }) => fetchPokemonList(pageParam, ITEMS_PER_PAGE),
     {
       getNextPageParam: (lastPage, pages) => {
         const nextOffset = pages.length * ITEMS_PER_PAGE;
         return nextOffset < lastPage.count ? nextOffset : undefined;
       },
-      enabled: filterType === "all",
+      enabled: filterType === 'all',
     }
   );
 
@@ -66,14 +54,14 @@ const Pokedex: React.FC = () => {
     isFetchingNextPage: isFetchingNextTypePage,
     status: typeStatus,
   } = useInfiniteQuery<PokemonListItem[]>(
-    ["pokemonByType", filterType],
+    ['pokemonByType', filterType],
     ({ pageParam = 0 }) =>
       fetchPokemonByType(filterType, pageParam, ITEMS_PER_PAGE),
     {
       getNextPageParam: (lastPage, pages) => {
         return lastPage.length === ITEMS_PER_PAGE ? pages.length : undefined;
       },
-      enabled: filterType !== "all",
+      enabled: filterType !== 'all',
     }
   );
 
@@ -82,7 +70,7 @@ const Pokedex: React.FC = () => {
     status: searchStatus,
     refetch: refetchSearch,
   } = useQuery<PokemonListItem[]>(
-    ["pokemonSearch", searchTerm],
+    ['pokemonSearch', searchTerm],
     () => searchPokemon(searchTerm),
     {
       enabled: false,
@@ -90,24 +78,6 @@ const Pokedex: React.FC = () => {
       onError: () => setIsSearching(false),
     }
   );
-
-  const { data: pokemonDetails, status: detailStatus } =
-    useQuery<PokemonDetails>(
-      ["pokemonDetails", selectedPokemon],
-      () => fetchPokemonDetails(selectedPokemon!),
-      {
-        enabled: !!selectedPokemon,
-      }
-    );
-
-  const { data: evolutionChain, status: evolutionStatus } =
-    useQuery<EvolutionChain | null>(
-      ["evolutionChain", pokemonDetails?.id],
-      () => fetchEvolutionChain(pokemonDetails!.id),
-      {
-        enabled: !!pokemonDetails?.id,
-      }
-    );
 
   const handleSearch = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,25 +97,17 @@ const Pokedex: React.FC = () => {
     [searchTerm, refetchSearch]
   );
 
-  const toggleFavorite = useCallback((pokemonId: number) => {
-    setFavorites((prev) =>
-      prev.includes(pokemonId)
-        ? prev.filter((id) => id !== pokemonId)
-        : [...prev, pokemonId]
-    );
-  }, []);
-
   const handleTypeChange = useCallback((newType: string) => {
     setFilterType(newType);
     setIsSearching(false);
-    setSearchTerm("");
+    setSearchTerm('');
   }, []);
 
   const displayedPokemon = useMemo(() => {
     if (isSearching && searchResults) {
       return searchResults;
     }
-    if (filterType !== "all" && pokemonByType) {
+    if (filterType !== 'all' && pokemonByType) {
       return pokemonByType.pages.flat();
     }
     return pokemonListData
@@ -154,14 +116,14 @@ const Pokedex: React.FC = () => {
   }, [isSearching, searchResults, filterType, pokemonByType, pokemonListData]);
 
   const loadMore = useCallback(() => {
-    if (filterType === "all") {
+    if (filterType === 'all') {
       fetchNextPage();
     } else {
       fetchNextTypePage();
     }
   }, [filterType, fetchNextPage, fetchNextTypePage]);
 
-  if (listStatus === "error")
+  if (listStatus === 'error')
     return <ErrorComponent message="Failed to fetch Pokemon list" />;
 
   return (
@@ -210,23 +172,21 @@ const Pokedex: React.FC = () => {
         </form>
       </div>
 
-      {listStatus === "loading" ||
-      searchStatus === "loading" ||
-      typeStatus === "loading" ? (
+      {listStatus === 'loading' ||
+      searchStatus === 'loading' ||
+      typeStatus === 'loading' ? (
         <LoadingIndicator />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayedPokemon.map((pokemon) => (
-              <PokemonListCard
-                key={pokemon.name}
-                pokemon={pokemon}
-                onClick={() => setSelectedPokemon(pokemon.name)}
-              />
+              <Link href={`/pokemon/${pokemon.name}`} key={pokemon.name}>
+                <PokemonListCard pokemon={pokemon} />
+              </Link>
             ))}
           </div>
           {!isSearching &&
-            (filterType === "all" ? hasNextPage : hasNextTypePage) && (
+            (filterType === 'all' ? hasNextPage : hasNextTypePage) && (
               <div className="mt-8 flex justify-center">
                 <Button
                   onClick={loadMore}
@@ -234,57 +194,13 @@ const Pokedex: React.FC = () => {
                   className="pixel-text bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
                 >
                   {isFetchingNextPage || isFetchingNextTypePage
-                    ? "Loading..."
-                    : "Load More"}
+                    ? 'Loading...'
+                    : 'Load More'}
                 </Button>
               </div>
             )}
         </>
       )}
-
-      <AnimatePresence>
-        {selectedPokemon && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="mt-8 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg"
-          >
-            {detailStatus === "loading" ? (
-              <LoadingIndicator message="Loading Pokemon details..." />
-            ) : detailStatus === "error" ? (
-              <ErrorComponent
-                message="Error fetching Pokemon details"
-                onRetry={() =>
-                  queryClient.invalidateQueries([
-                    "pokemonDetails",
-                    selectedPokemon,
-                  ])
-                }
-              />
-            ) : pokemonDetails ? (
-              <PokemonCard
-                pokemon={pokemonDetails}
-                evolutionChain={evolutionChain ?? null}
-                isLoading={evolutionStatus === "loading"}
-                error={
-                  evolutionStatus === "error"
-                    ? "Error fetching evolution chain"
-                    : null
-                }
-                onRetry={() =>
-                  queryClient.invalidateQueries([
-                    "evolutionChain",
-                    pokemonDetails.id,
-                  ])
-                }
-                isFavorite={favorites.includes(pokemonDetails.id)}
-                onToggleFavorite={() => toggleFavorite(pokemonDetails.id)}
-              />
-            ) : null}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };
