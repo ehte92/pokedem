@@ -32,6 +32,67 @@ import {
   PokemonSpecies,
 } from '@/lib/types';
 
+// Type effectiveness data
+const typeEffectiveness = {
+  normal: { weaknesses: ['fighting'], strengths: [] },
+  fire: {
+    weaknesses: ['water', 'ground', 'rock'],
+    strengths: ['grass', 'ice', 'bug', 'steel'],
+  },
+  water: {
+    weaknesses: ['electric', 'grass'],
+    strengths: ['fire', 'ground', 'rock'],
+  },
+  electric: { weaknesses: ['ground'], strengths: ['water', 'flying'] },
+  grass: {
+    weaknesses: ['fire', 'ice', 'poison', 'flying', 'bug'],
+    strengths: ['water', 'ground', 'rock'],
+  },
+  ice: {
+    weaknesses: ['fire', 'fighting', 'rock', 'steel'],
+    strengths: ['grass', 'ground', 'flying', 'dragon'],
+  },
+  fighting: {
+    weaknesses: ['flying', 'psychic', 'fairy'],
+    strengths: ['normal', 'ice', 'rock', 'dark', 'steel'],
+  },
+  poison: { weaknesses: ['ground', 'psychic'], strengths: ['grass', 'fairy'] },
+  ground: {
+    weaknesses: ['water', 'grass', 'ice'],
+    strengths: ['fire', 'electric', 'poison', 'rock', 'steel'],
+  },
+  flying: {
+    weaknesses: ['electric', 'ice', 'rock'],
+    strengths: ['grass', 'fighting', 'bug'],
+  },
+  psychic: {
+    weaknesses: ['bug', 'ghost', 'dark'],
+    strengths: ['fighting', 'poison'],
+  },
+  bug: {
+    weaknesses: ['fire', 'flying', 'rock'],
+    strengths: ['grass', 'psychic', 'dark'],
+  },
+  rock: {
+    weaknesses: ['water', 'grass', 'fighting', 'ground', 'steel'],
+    strengths: ['fire', 'ice', 'flying', 'bug'],
+  },
+  ghost: { weaknesses: ['ghost', 'dark'], strengths: ['psychic', 'ghost'] },
+  dragon: { weaknesses: ['ice', 'dragon', 'fairy'], strengths: ['dragon'] },
+  dark: {
+    weaknesses: ['fighting', 'bug', 'fairy'],
+    strengths: ['psychic', 'ghost'],
+  },
+  steel: {
+    weaknesses: ['fire', 'fighting', 'ground'],
+    strengths: ['ice', 'rock', 'fairy'],
+  },
+  fairy: {
+    weaknesses: ['poison', 'steel'],
+    strengths: ['fighting', 'dragon', 'dark'],
+  },
+};
+
 const PokemonDetailPage = () => {
   const { id } = useParams();
   const pokemonId = Array.isArray(id) ? id[0] : id;
@@ -89,6 +150,34 @@ const PokemonDetailPage = () => {
     }
   }, [species]);
 
+  const calculateTypeEffectiveness = (types: string[]) => {
+    let weaknesses = new Set<string>();
+    let strengths = new Set<string>();
+
+    types.forEach((type) => {
+      (
+        typeEffectiveness as {
+          [key: string]: { weaknesses: string[]; strengths: string[] };
+        }
+      )[type.toLowerCase()]?.weaknesses.forEach((w) => weaknesses.add(w));
+      (
+        typeEffectiveness as {
+          [key: string]: { weaknesses: string[]; strengths: string[] };
+        }
+      )[type.toLowerCase()]?.strengths.forEach((s) => strengths.add(s));
+    });
+
+    // Remove types that appear in both weaknesses and strengths
+    const finalWeaknesses = Array.from(weaknesses).filter(
+      (w) => !strengths.has(w)
+    );
+    const finalStrengths = Array.from(strengths).filter(
+      (s) => !weaknesses.has(s)
+    );
+
+    return { weaknesses: finalWeaknesses, strengths: finalStrengths };
+  };
+
   if (isPokemonLoading || isSpeciesLoading)
     return <div className="text-center mt-8">Loading...</div>;
   if (pokemonError || speciesError)
@@ -129,6 +218,12 @@ const PokemonDetailPage = () => {
     );
   };
 
+  if (!pokemon || !species) return null;
+
+  const { weaknesses, strengths } = calculateTypeEffectiveness(
+    pokemon.types.map((t) => t.type.name)
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Link
@@ -141,8 +236,8 @@ const PokemonDetailPage = () => {
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
-            {/* Left side - Pokemon Image */}
-            <div className="w-full md:w-1/3 bg-gray-100 dark:bg-gray-800 flex items-center justify-center p-8">
+            {/* Left side - Pokemon Image and Stats */}
+            <div className="w-full md:w-1/3 bg-gray-100 dark:bg-gray-800 flex flex-col items-center p-8">
               <Image
                 src={
                   pokemon.sprites.other['official-artwork'].front_default ||
@@ -151,8 +246,29 @@ const PokemonDetailPage = () => {
                 alt={pokemon.name}
                 width={300}
                 height={300}
-                className="object-contain"
+                className="object-contain mb-8"
               />
+
+              {/* Stats Section */}
+              <div className="w-full">
+                <h3 className="text-xl font-semibold mb-4">Stats</h3>
+                <div className="space-y-2">
+                  {pokemon.stats.map((stat) => (
+                    <div key={stat.stat.name}>
+                      <div className="flex justify-between">
+                        <span className="capitalize">{stat.stat.name}</span>
+                        <span>{stat.base_stat}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                        <div
+                          className="bg-blue-600 h-2.5 rounded-full"
+                          style={{ width: `${(stat.base_stat / 255) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Right side - Pokemon Details */}
@@ -164,17 +280,6 @@ const PokemonDetailPage = () => {
                 <span className="text-2xl font-semibold text-gray-500">
                   #{pokemon.id.toString().padStart(3, '0')}
                 </span>
-              </div>
-
-              <div className="mb-4">
-                {pokemon.types.map((type) => (
-                  <Badge
-                    key={type.type.name}
-                    className={`mr-2 ${typeColors[type.type.name]} text-white`}
-                  >
-                    {type.type.name}
-                  </Badge>
-                ))}
               </div>
 
               <div className="mb-6">
@@ -264,23 +369,51 @@ const PokemonDetailPage = () => {
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Stats</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {pokemon.stats.map((stat) => (
-                    <div key={stat.stat.name}>
-                      <div className="flex justify-between">
-                        <span className="capitalize">{stat.stat.name}</span>
-                        <span>{stat.base_stat}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                        <div
-                          className="bg-blue-600 h-2.5 rounded-full"
-                          style={{ width: `${(stat.base_stat / 255) * 100}%` }}
-                        ></div>
-                      </div>
+              {/* Type Effectiveness Section */}
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
+                <h3 className="text-xl font-semibold mb-4">
+                  Type Effectiveness
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Type</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {pokemon.types.map((type) => (
+                        <Badge
+                          key={type.type.name}
+                          className={`${typeColors[type.type.name]} text-white`}
+                        >
+                          {type.type.name}
+                        </Badge>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Weaknesses</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {weaknesses.map((type) => (
+                        <Badge
+                          key={type}
+                          className={`${typeColors[type]} text-white`}
+                        >
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Strong Against</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {strengths.map((type) => (
+                        <Badge
+                          key={type}
+                          className={`${typeColors[type]} text-white`}
+                        >
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
