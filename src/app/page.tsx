@@ -2,10 +2,14 @@
 
 import React from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from 'react-query';
 import Slider from 'react-slick';
+import 'slick-carousel/slick/slick-theme.css';
+import 'slick-carousel/slick/slick.css';
 
+import { Card, CardContent } from '@/components/ui/card';
 import { fetchPokemonDetails } from '@/lib/api';
 import { typeColors } from '@/lib/constants';
 import { PokemonDetails } from '@/lib/types';
@@ -48,9 +52,14 @@ const FeaturedPokemon: React.FC<FeaturedPokemonProps> = ({ pokemonId }) => {
 
   if (isLoading)
     return (
-      <div className="animate-pulse bg-gray-300 dark:bg-gray-700 h-72 rounded-lg"></div>
+      <Card className="h-80 animate-pulse bg-gray-300 dark:bg-gray-700"></Card>
     );
-  if (error) return <div className="text-red-500">Error loading Pokémon</div>;
+  if (error)
+    return (
+      <Card className="h-80 flex items-center justify-center text-red-500">
+        Error loading Pokémon
+      </Card>
+    );
   if (!details) return null;
 
   const imageUrl =
@@ -58,75 +67,91 @@ const FeaturedPokemon: React.FC<FeaturedPokemonProps> = ({ pokemonId }) => {
     details.sprites.front_default;
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden mx-2">
-      <div className="h-48 bg-gray-700 flex items-center justify-center">
-        {imageUrl && (
-          <img
-            src={imageUrl}
-            alt={details.name}
-            className="w-full h-full object-contain"
-          />
-        )}
-      </div>
-      <div className="p-3 text-white">
-        <div className="flex justify-between items-center mb-1">
-          <h3 className="text-base font-semibold capitalize truncate">
+    <Card className="transition-all duration-300 transform spotlight-card overflow-hidden border-4 border-yellow-400 bg-red-500 dark:bg-red-700">
+      <CardContent className="p-0">
+        <div className="bg-white dark:bg-gray-800 rounded-t-lg p-4">
+          <div className="relative h-48 flex items-center justify-center mb-4">
+            {imageUrl && (
+              <Image
+                src={imageUrl}
+                alt={details.name}
+                width={150}
+                height={150}
+                className="object-contain transition-all duration-300 drop-shadow-lg"
+              />
+            )}
+            <div className="absolute top-0 left-0 bg-blue-500 dark:bg-blue-600 text-white px-2 py-1 rounded-br-lg text-xs font-bold">
+              #{details.id.toString().padStart(3, '0')}
+            </div>
+          </div>
+          <h3 className="text-xl font-bold text-center capitalize mb-2 text-gray-800 dark:text-white">
             {details.name}
           </h3>
-          <span className="text-sm text-gray-400">
-            #{details.id.toString().padStart(3, '0')}
-          </span>
+          <div className="flex justify-center gap-2 mb-2">
+            {details.types.map((type) => (
+              <span
+                key={type.type.name}
+                className={`px-2 py-1 rounded text-xs text-white font-semibold ${typeColors[type.type.name]}`}
+              >
+                {type.type.name}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-1 mb-1">
-          {details.types.map((type) => (
-            <span
-              key={type.type.name}
-              className={`${typeColors[type.type.name]} px-2 py-0.5 rounded text-xs`}
-            >
-              {type.type.name}
-            </span>
-          ))}
+        <div className="bg-red-500 dark:bg-red-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="font-semibold">Ability:</span>{' '}
+              {details.abilities[0]?.ability.name}
+            </p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              <span className="font-semibold">Height:</span>{' '}
+              {details.height / 10} m
+            </p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              <span className="font-semibold">Weight:</span>{' '}
+              {details.weight / 10} kg
+            </p>
+          </div>
         </div>
-        <div className="text-xs truncate">
-          Ability: {details.abilities[0]?.ability.name}
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
-const Home = () => {
+const Home: React.FC = () => {
   const randomPokemonIds = React.useMemo(() => getRandomPokemonIds(), []);
 
   const settings = {
-    dots: true,
+    className: 'center spotlight-carousel',
+    centerMode: true,
     infinite: true,
+    centerPadding: '60px',
+    slidesToShow: 3,
     speed: 500,
-    slidesToShow: 5,
-    slidesToScroll: 1,
+    focusOnSelect: true,
+    dots: true,
+    arrows: true,
     responsive: [
       {
         breakpoint: 1280,
         settings: {
-          slidesToShow: 4,
+          slidesToShow: 3,
+          centerPadding: '40px',
         },
       },
       {
         breakpoint: 1024,
         settings: {
-          slidesToShow: 3,
+          slidesToShow: 1,
+          centerPadding: '120px',
         },
       },
       {
         breakpoint: 768,
         settings: {
-          slidesToShow: 2,
-        },
-      },
-      {
-        breakpoint: 640,
-        settings: {
           slidesToShow: 1,
+          centerPadding: '60px',
         },
       },
     ],
@@ -142,48 +167,54 @@ const Home = () => {
         Master!
       </p>
 
-      <div className="mb-12">
+      <div className="mb-16">
         <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800 dark:text-gray-200">
           Featured Pokémon
         </h2>
-        <Slider {...settings}>
-          {randomPokemonIds.map((id) => (
-            <FeaturedPokemon key={id} pokemonId={id} />
-          ))}
-        </Slider>
+        <div className="spotlight-carousel-container px-4 md:px-12">
+          {' '}
+          {/* Added horizontal padding */}
+          <Slider {...settings}>
+            {randomPokemonIds.map((id) => (
+              <div key={id} className="px-2">
+                <FeaturedPokemon pokemonId={id} />
+              </div>
+            ))}
+          </Slider>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-            Pokédex
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Access comprehensive information about all Pokémon species,
-            including their types, abilities, and stats.
-          </p>
-          <Link
-            href="/pokedex"
-            className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-          >
-            Open Pokédex
-          </Link>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-            Search
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Looking for a specific Pokémon? Use our search feature to find
-            information quickly.
-          </p>
-          <Link
-            href="/pokedex"
-            className="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
-          >
-            Search Pokémon
-          </Link>
-        </div>
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-semibold mb-4">Pokédex</h2>
+            <p className="mb-4">
+              Access comprehensive information about all Pokémon species,
+              including their types, abilities, and stats.
+            </p>
+            <Link
+              href="/pokedex"
+              className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            >
+              Open Pokédex
+            </Link>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-semibold mb-4">Search</h2>
+            <p className="mb-4">
+              Looking for a specific Pokémon? Use our search feature to find
+              information quickly.
+            </p>
+            <Link
+              href="/pokedex"
+              className="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+            >
+              Search Pokémon
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

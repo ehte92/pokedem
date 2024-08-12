@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -72,7 +72,7 @@
 
 @layer utilities {
   .font-pixel {
-    font-family: "Press Start 2P", cursive;
+    font-family: 'Press Start 2P', cursive;
   }
 
   .pixel-text {
@@ -83,5 +83,73 @@
 
   .pixelated {
     image-rendering: pixelated;
+  }
+
+  .spotlight-carousel-container {
+    @apply relative overflow-visible py-24;
+  }
+
+  .spotlight-carousel .slick-list {
+    @apply overflow-visible;
+  }
+
+  .spotlight-carousel .slick-slide {
+    @apply transition-all duration-300 transform scale-90 opacity-70;
+  }
+
+  .spotlight-carousel .slick-center {
+    @apply scale-110 opacity-100 z-10;
+  }
+
+  .spotlight-carousel .slick-center .spotlight-card {
+    @apply shadow-xl -translate-y-8;
+  }
+
+  .spotlight-carousel .slick-prev,
+  .spotlight-carousel .slick-next {
+    @apply z-20 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .spotlight-carousel .slick-prev:hover,
+  .spotlight-carousel .slick-next:hover {
+    @apply bg-yellow-500;
+  }
+
+  .spotlight-carousel .slick-prev:before,
+  .spotlight-carousel .slick-next:before {
+    @apply text-4xl text-red-600;
+    font-family: 'slick';
+    line-height: 1;
+    opacity: 1;
+  }
+
+  .spotlight-carousel .slick-prev {
+    @apply left-4 md:left-8;
+  }
+
+  .spotlight-carousel .slick-next {
+    @apply right-4 md:right-8;
+  }
+
+  .spotlight-carousel .slick-prev:before {
+    content: '←';
+  }
+
+  .spotlight-carousel .slick-next:before {
+    content: '→';
+  }
+
+  .spotlight-carousel .slick-dots {
+    @apply bottom-0;
+  }
+
+  .spotlight-carousel .slick-dots li button:before {
+    @apply text-yellow-400;
+  }
+
+  .spotlight-card {
+    @apply bg-gradient-to-b from-red-500 to-red-600 dark:from-red-700 dark:to-red-800;
   }
 }
