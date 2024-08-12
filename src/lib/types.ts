@@ -24,6 +24,15 @@ export interface PokemonMove {
   };
 }
 
+export interface PokemonSprites {
+  front_default: string;
+  other: {
+    'official-artwork': {
+      front_default: string;
+    };
+  };
+}
+
 export interface PokemonDetails {
   id: number;
   name: string;
@@ -33,9 +42,7 @@ export interface PokemonDetails {
   abilities: PokemonAbility[];
   stats: PokemonStat[];
   moves: PokemonMove[];
-  sprites: {
-    front_default: string;
-  };
+  sprites: PokemonSprites;
 }
 
 export interface PokemonListItem {

@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { Inter as FontSans } from 'next/font/google';
 import Link from 'next/link';
+import 'slick-carousel/slick/slick-theme.css';
+import 'slick-carousel/slick/slick.css';
 
 import ThemeToggle from '@/components/theme-toggle';
-import { cn } from '@/lib/utils';
 
 import { Document } from './Document';
 import { NextLoader } from './NextLoader';
