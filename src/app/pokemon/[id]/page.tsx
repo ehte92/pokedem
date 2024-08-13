@@ -3,7 +3,15 @@
 import React, { useEffect, useState } from 'react';
 
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { ArrowLeftCircle, Ruler, Star, Weight, Zap } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowLeftCircle,
+  ArrowRight,
+  Ruler,
+  Star,
+  Weight,
+  Zap,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -11,6 +19,7 @@ import { useQuery } from 'react-query';
 
 import EvolutionChainComponent from '@/components/evolution-chain';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
@@ -23,6 +32,7 @@ import {
   fetchAbilityDetails,
   fetchEvolutionChain,
   fetchPokemonDetails,
+  fetchPokemonList,
   fetchPokemonSpecies,
 } from '@/lib/api';
 import { typeColors } from '@/lib/constants';
@@ -30,6 +40,7 @@ import {
   AbilityDetails,
   EvolutionChain,
   PokemonDetails,
+  PokemonListItem,
   PokemonSpecies,
 } from '@/lib/types';
 
@@ -96,23 +107,33 @@ const typeEffectiveness = {
 
 const PokemonDetailPage = () => {
   const { id } = useParams();
-  const pokemonId = Array.isArray(id) ? id[0] : id;
+  const pokemonName = Array.isArray(id) ? id[0] : id;
   const [selectedGen, setSelectedGen] = useState<string>('red');
+  const [prevPokemon, setPrevPokemon] = useState<PokemonListItem | null>(null);
+  const [nextPokemon, setNextPokemon] = useState<PokemonListItem | null>(null);
+
+  const { data: allPokemon } = useQuery<PokemonListItem[]>(
+    'allPokemon',
+    async () => {
+      const response = await fetchPokemonList(0, 1000);
+      return response.results;
+    }
+  );
 
   const {
     data: pokemon,
     isLoading: isPokemonLoading,
     error: pokemonError,
-  } = useQuery<PokemonDetails>(['pokemonDetails', pokemonId], () =>
-    fetchPokemonDetails(pokemonId)
+  } = useQuery<PokemonDetails>(['pokemonDetails', pokemonName], () =>
+    fetchPokemonDetails(pokemonName)
   );
 
   const {
     data: species,
     isLoading: isSpeciesLoading,
     error: speciesError,
-  } = useQuery<PokemonSpecies>(['pokemonSpecies', pokemonId], () =>
-    fetchPokemonSpecies(pokemonId)
+  } = useQuery<PokemonSpecies>(['pokemonSpecies', pokemonName], () =>
+    fetchPokemonSpecies(pokemonName)
   );
 
   const {
@@ -150,6 +171,22 @@ const PokemonDetailPage = () => {
       setSelectedGen(hasRedVersion ? 'red' : 'latest');
     }
   }, [species]);
+
+  useEffect(() => {
+    if (allPokemon && pokemon) {
+      const currentIndex = allPokemon.findIndex((p) => p.name === pokemon.name);
+      if (currentIndex > 0) {
+        setPrevPokemon(allPokemon[currentIndex - 1]);
+      } else {
+        setPrevPokemon(null);
+      }
+      if (currentIndex < allPokemon.length - 1) {
+        setNextPokemon(allPokemon[currentIndex + 1]);
+      } else {
+        setNextPokemon(null);
+      }
+    }
+  }, [allPokemon, pokemon]);
 
   const calculateTypeEffectiveness = (types: string[]) => {
     let weaknesses = new Set<string>();
@@ -190,7 +227,8 @@ const PokemonDetailPage = () => {
   if (!pokemon || !species) return null;
 
   const getDescription = () => {
-    if (!species.flavor_text_entries.length) return 'No description available.';
+    if (!species?.flavor_text_entries.length)
+      return 'No description available.';
 
     if (selectedGen === 'latest') {
       return species.flavor_text_entries[species.flavor_text_entries.length - 1]
@@ -205,9 +243,11 @@ const PokemonDetailPage = () => {
       : 'No description available for this generation.';
   };
 
-  const availableGens = Array.from(
-    new Set(species.flavor_text_entries.map((entry) => entry.version.name))
-  );
+  const availableGens = species
+    ? Array.from(
+        new Set(species.flavor_text_entries.map((entry) => entry.version.name))
+      )
+    : [];
 
   const getAbilityDescription = () => {
     if (isAbilityLoading) return 'Loading ability description...';
@@ -219,6 +259,14 @@ const PokemonDetailPage = () => {
     );
   };
 
+  if (isPokemonLoading || isSpeciesLoading)
+    return <div className="text-center mt-8">Loading...</div>;
+  if (pokemonError || speciesError)
+    return (
+      <div className="text-center mt-8 text-red-500">
+        Error loading Pokémon details
+      </div>
+    );
   if (!pokemon || !species) return null;
 
   const { weaknesses, strengths } = calculateTypeEffectiveness(
@@ -227,13 +275,33 @@ const PokemonDetailPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link
-        href="/pokedex"
-        className="inline-flex items-center mb-6 text-blue-500 hover:text-blue-600 transition-colors"
-      >
-        <ArrowLeftCircle className="mr-2" />
-        Back to Pokédex
-      </Link>
+      <div className="flex justify-between items-center mb-6">
+        <Link
+          href="/pokedex"
+          className="inline-flex items-center text-blue-500 hover:text-blue-600 transition-colors"
+        >
+          <ArrowLeftCircle className="mr-2" />
+          Back to Pokédex
+        </Link>
+        <div className="flex space-x-4">
+          {prevPokemon && (
+            <Link href={`/pokemon/${prevPokemon.name}`}>
+              <Button variant="outline" className="flex items-center">
+                <ArrowLeft className="mr-2" />
+                {prevPokemon.name}
+              </Button>
+            </Link>
+          )}
+          {nextPokemon && (
+            <Link href={`/pokemon/${nextPokemon.name}`}>
+              <Button variant="outline" className="flex items-center">
+                {nextPokemon.name}
+                <ArrowRight className="ml-2" />
+              </Button>
+            </Link>
+          )}
+        </div>
+      </div>
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
