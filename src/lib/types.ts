@@ -103,3 +103,23 @@ export interface AbilityDetails {
   }[];
   // Add other fields as needed
 }
+
+export interface MoveDetails {
+  id: number;
+  name: string;
+  accuracy: number | null;
+  effect_chance: number | null;
+  pp: number;
+  priority: number;
+  power: number | null;
+  damage_class: {
+    name: string;
+  };
+  type: {
+    name: string;
+  };
+  effect_entries: {
+    effect: string;
+    short_effect: string;
+  }[];
+}

@@ -1,6 +1,7 @@
 import {
   AbilityDetails,
   EvolutionChain,
+  MoveDetails,
   PokemonDetails,
   PokemonListItem,
   PokemonSpecies,
@@ -92,5 +93,13 @@ export const fetchAbilityDetails = async (
     `https://pokeapi.co/api/v2/ability/${abilityName}`
   );
   if (!response.ok) throw new Error('Failed to fetch ability details');
+  return response.json();
+};
+
+export const fetchMoveDetails = async (
+  moveName: string
+): Promise<MoveDetails> => {
+  const response = await fetch(`https://pokeapi.co/api/v2/move/${moveName}`);
+  if (!response.ok) throw new Error('Failed to fetch move details');
   return response.json();
 };
