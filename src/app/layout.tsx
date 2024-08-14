@@ -58,6 +58,14 @@ export default function RootLayout({
                       Team Builder
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      href="/battle"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors text-sm"
+                    >
+                      Battle
+                    </Link>
+                  </li>
                 </ul>
               </nav>
               <ThemeToggle />
