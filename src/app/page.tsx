@@ -204,16 +204,16 @@ const Home: React.FC = () => {
         </Card>
         <Card>
           <CardContent className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Search</h2>
+            <h2 className="text-2xl font-semibold mb-4">Team Builder</h2>
             <p className="mb-4">
-              Looking for a specific Pokémon? Use our search feature to find
-              information quickly.
+              Create your dream Pokémon team and analyze its strengths and
+              weaknesses.
             </p>
             <Link
-              href="/pokedex"
+              href="/team-builder"
               className="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
             >
-              Search Pokémon
+              Build Your Team
             </Link>
           </CardContent>
         </Card>

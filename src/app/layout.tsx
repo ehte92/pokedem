@@ -50,7 +50,14 @@ export default function RootLayout({
                       Pokédex
                     </Link>
                   </li>
-                  {/* Add more navigation items here as needed */}
+                  <li>
+                    <Link
+                      href="/team-builder"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors text-sm"
+                    >
+                      Team Builder
+                    </Link>
+                  </li>
                 </ul>
               </nav>
               <ThemeToggle />
