@@ -16,6 +16,7 @@ import {
 } from '@/lib/types';
 
 import { BattleAI } from './battle-ai';
+import PokemonSwitcher from './pokemin-switcher';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -65,6 +66,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
   const [attackAnimation, setAttackAnimation] = useState<'user' | 'ai' | null>(
     null
   );
+  const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
     if (aiActivePokemon && userActivePokemon) {
@@ -400,8 +402,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
         setIsUserTurn(!isUserTurn);
         return;
       }
-
-      setTimeout(() => setAttackAnimation(null), 1000);
     }
 
     try {
@@ -460,6 +460,17 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
       console.error('Error handling turn:', error);
       setBattleLog((prev) => [...prev, 'An error occurred during the turn.']);
       setIsUserTurn(!isUserTurn);
+    }
+    setTimeout(() => setAttackAnimation(null), 1000);
+    setIsUserTurn(!isUserTurn);
+  };
+
+  const handleSwitch = (newPokemon: PokemonBattleState) => {
+    if (newPokemon.currentHP > 0 && newPokemon !== userActivePokemon) {
+      setUserActivePokemon(newPokemon);
+      setBattleLog((prev) => [...prev, `Go, ${newPokemon.name}!`]);
+      setIsSwitching(false);
+      setIsUserTurn(false); // End the user's turn after switching
     }
   };
 
@@ -530,7 +541,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
           : 'bg-red-500';
 
     return (
-      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2">
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mt-2">
         <motion.div
           className={`h-2.5 rounded-full ${barColor}`}
           initial={{ width: '100%' }}
@@ -544,7 +555,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
   const renderPokemonCard = (pokemon: PokemonBattleState, isUser: boolean) => (
     <motion.div
       className={`flex flex-col items-center p-4 rounded-lg shadow-lg ${
-        theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+        theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
       }`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -602,50 +613,81 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
           {renderPokemonCard(aiActivePokemon, false)}
         </div>
 
-        <div className="mb-6">
-          <h4 className="font-bold mb-2">Your Team:</h4>
-          <div className="flex justify-center space-x-4">
-            {userTeamState.map((pokemon, index) => (
-              <motion.div
-                key={index}
-                className={`w-16 h-16 rounded-full overflow-hidden ${
-                  pokemon.currentHP === 0 ? 'opacity-50 grayscale' : ''
-                }`}
-                whileHover={{ scale: 1.1 }}
-              >
-                <Image
-                  src={pokemon.sprites.front_default}
-                  alt={pokemon.name}
-                  width={64}
-                  height={64}
-                  className="pixelated"
-                />
-              </motion.div>
-            ))}
+        {isSwitching ? (
+          <div className="mb-6">
+            <h4 className="font-bold mb-2">Switch Pokémon:</h4>
+            <PokemonSwitcher
+              team={userTeamState}
+              activePokemon={userActivePokemon}
+              onSwitch={handleSwitch}
+            />
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="mb-6">
+              <h4 className="font-bold mb-2">Your Team:</h4>
+              <div className="flex justify-center space-x-4">
+                {userTeamState.map((pokemon, index) => (
+                  <motion.div
+                    key={index}
+                    className={`w-16 h-16 rounded-full overflow-hidden ${
+                      pokemon.currentHP === 0 ? 'opacity-50 grayscale' : ''
+                    } ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}
+                    whileHover={{ scale: 1.1 }}
+                  >
+                    <Image
+                      src={pokemon.sprites.front_default}
+                      alt={pokemon.name}
+                      width={64}
+                      height={64}
+                      className="pixelated"
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
 
-        <div className="mb-6">
-          <h4 className="font-bold mb-2">Select a Move:</h4>
-          <div className="grid grid-cols-2 gap-2">
-            {userActivePokemon.moves.slice(0, 4).map((move) => (
-              <Button
-                key={move.move.name}
-                onClick={() =>
-                  handleTurn(userActivePokemon, aiActivePokemon, move.move.name)
-                }
-                disabled={!isUserTurn}
-                className="capitalize"
-              >
-                {move.move.name}
-              </Button>
-            ))}
-          </div>
-        </div>
+            <div className="mb-6">
+              <h4 className="font-bold mb-2">Select a Move:</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {userActivePokemon.moves.slice(0, 4).map((move) => (
+                  <Button
+                    key={move.move.name}
+                    onClick={() =>
+                      handleTurn(
+                        userActivePokemon,
+                        aiActivePokemon,
+                        move.move.name
+                      )
+                    }
+                    disabled={!isUserTurn}
+                    className="capitalize"
+                  >
+                    {move.move.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setIsSwitching(true)}
+              disabled={!isUserTurn}
+              className="w-full mb-4"
+            >
+              Switch Pokémon
+            </Button>
+          </>
+        )}
 
         <div>
           <h4 className="font-bold mb-2">Battle Log:</h4>
-          <div className="h-40 overflow-y-auto border p-2 rounded-lg">
+          <div
+            className={`h-40 overflow-y-auto border p-2 rounded-lg ${
+              theme === 'dark'
+                ? 'bg-gray-800 text-white border-gray-700'
+                : 'bg-white text-gray-900 border-gray-200'
+            }`}
+          >
             <AnimatePresence>
               {battleLog.map((log, index) => (
                 <motion.p
