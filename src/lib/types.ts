@@ -118,8 +118,57 @@ export interface MoveDetails {
   type: {
     name: string;
   };
+  meta: {
+    ailment: {
+      name: string;
+    };
+    category: {
+      name: string;
+    };
+    min_hits: number | null;
+    max_hits: number | null;
+    min_turns: number | null;
+    max_turns: number | null;
+    drain: number;
+    healing: number;
+    crit_rate: number;
+    ailment_chance: number;
+    flinch_chance: number;
+    stat_chance: number;
+  };
+  stat_changes: {
+    change: number;
+    stat: {
+      name: string;
+    };
+  }[];
+  target: {
+    name: string;
+  };
   effect_entries: {
     effect: string;
     short_effect: string;
   }[];
+}
+
+export type StatusEffect =
+  | 'paralysis'
+  | 'poison'
+  | 'burn'
+  | 'sleep'
+  | 'freeze'
+  | 'confusion'
+  | 'flinch'
+  | null;
+
+export interface Ability {
+  name: string;
+  effect: string;
+}
+
+export interface PokemonBattleState extends PokemonDetails {
+  currentHP: number;
+  status: StatusEffect;
+  sleepCounter?: number;
+  ability: Ability;
 }
