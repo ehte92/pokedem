@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 
+import { AnimatePresence, motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
+
 import { fetchAbilityDetails, fetchMoveDetails } from '@/lib/api';
-import { typeEffectiveness } from '@/lib/constants';
+import { typeColors, typeEffectiveness } from '@/lib/constants';
 import {
   Ability,
   MoveDetails,
@@ -12,6 +16,7 @@ import {
 } from '@/lib/types';
 
 import { BattleAI } from './battle-ai';
+import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
@@ -47,15 +52,19 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     };
   };
 
+  const { theme } = useTheme();
+  const [battleAI, setBattleAI] = useState<BattleAI | null>(null);
   const [userActivePokemon, setUserActivePokemon] =
     useState<PokemonBattleState | null>(null);
   const [aiActivePokemon, setAiActivePokemon] =
     useState<PokemonBattleState | null>(null);
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [isUserTurn, setIsUserTurn] = useState(true);
-  const [battleAI, setBattleAI] = useState<BattleAI | null>(null);
   const [userTeamState, setUserTeamState] = useState<PokemonBattleState[]>([]);
   const [aiTeamState, setAiTeamState] = useState<PokemonBattleState[]>([]);
+  const [attackAnimation, setAttackAnimation] = useState<'user' | 'ai' | null>(
+    null
+  );
 
   useEffect(() => {
     if (aiActivePokemon && userActivePokemon) {
@@ -122,26 +131,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     };
     initializeBattle();
   }, [userTeam, aiTeam]);
-
-  // useEffect(() => {
-  //   if (!isUserTurn && aiActivePokemon) {
-  //     setTimeout(() => {
-  //       const aiMove = selectRandomMove(aiActivePokemon);
-  //       if (aiMove && userActivePokemon) {
-  //         handleTurn(aiActivePokemon, userActivePokemon, aiMove);
-  //       } else {
-  //         setBattleLog((prev) => [...prev, "AI couldn't make a move!"]);
-  //         setIsUserTurn(true);
-  //       }
-  //     }, 1000);
-  //   }
-  // }, [isUserTurn, aiActivePokemon, userActivePokemon]);
-
-  const selectRandomMove = (pokemon: PokemonBattleState): string | null => {
-    if (pokemon.moves.length === 0) return null;
-    const moveIndex = Math.floor(Math.random() * pokemon.moves.length);
-    return pokemon.moves[moveIndex].move.name;
-  };
 
   const estimateLevel = (pokemon: PokemonDetails): number => {
     const baseStatTotal = pokemon.stats.reduce(
@@ -393,6 +382,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     moveName: string
   ) => {
     let turnLog: string[] = [];
+    setAttackAnimation(attacker === userActivePokemon ? 'user' : 'ai');
 
     // Handle pre-move status effects and abilities
     turnLog.push(...handleStatusEffects(attacker));
@@ -410,6 +400,8 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
         setIsUserTurn(!isUserTurn);
         return;
       }
+
+      setTimeout(() => setAttackAnimation(null), 1000);
     }
 
     try {
@@ -528,64 +520,112 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     );
   }
 
+  const renderHealthBar = (pokemon: PokemonBattleState) => {
+    const hpPercentage = (pokemon.currentHP / getMaxHP(pokemon)) * 100;
+    const barColor =
+      hpPercentage > 50
+        ? 'bg-green-500'
+        : hpPercentage > 20
+          ? 'bg-yellow-500'
+          : 'bg-red-500';
+
+    return (
+      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2">
+        <motion.div
+          className={`h-2.5 rounded-full ${barColor}`}
+          initial={{ width: '100%' }}
+          animate={{ width: `${hpPercentage}%` }}
+          transition={{ duration: 0.5 }}
+        />
+      </div>
+    );
+  };
+
+  const renderPokemonCard = (pokemon: PokemonBattleState, isUser: boolean) => (
+    <motion.div
+      className={`flex flex-col items-center p-4 rounded-lg shadow-lg ${
+        theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+      }`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        animate={
+          attackAnimation === (isUser ? 'user' : 'ai')
+            ? { x: [0, 10, -10, 10, 0] }
+            : {}
+        }
+        transition={{ duration: 0.5 }}
+      >
+        <Image
+          src={pokemon.sprites.front_default}
+          alt={pokemon.name}
+          width={120}
+          height={120}
+          className="pixelated"
+        />
+      </motion.div>
+      <h3 className="text-lg font-semibold mt-2 capitalize">{pokemon.name}</h3>
+      <div className="flex space-x-2 mt-2">
+        {pokemon.types.map((type) => (
+          <Badge
+            key={type.type.name}
+            className={`${typeColors[type.type.name] || 'bg-gray-500'} text-white`}
+          >
+            {type.type.name}
+          </Badge>
+        ))}
+      </div>
+      {renderHealthBar(pokemon)}
+      <p className="mt-2">
+        HP: {pokemon.currentHP} / {getMaxHP(pokemon)}
+      </p>
+      {pokemon.status && (
+        <Badge variant="destructive" className="mt-2">
+          {pokemon.status}
+        </Badge>
+      )}
+    </motion.div>
+  );
+
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto overflow-hidden">
       <CardHeader>
-        <CardTitle>Pokémon Battle</CardTitle>
+        <CardTitle className="text-center text-2xl">Pokémon Battle</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between mb-4">
-          <div>
-            <h3 className="font-bold">{userActivePokemon.name}</h3>
-            <p>Ability: {userActivePokemon.ability.name}</p>
-            <Progress
-              value={
-                (userActivePokemon.currentHP / getMaxHP(userActivePokemon)) *
-                100
-              }
-              className="w-40"
-            />
-            <p>
-              HP: {userActivePokemon.currentHP} / {getMaxHP(userActivePokemon)}
-            </p>
-            {userActivePokemon.status && (
-              <p>Status: {userActivePokemon.status}</p>
-            )}
-          </div>
-          <div>
-            <h3 className="font-bold">{aiActivePokemon.name}</h3>
-            <p>Ability: {aiActivePokemon.ability.name}</p>
-            <Progress
-              value={
-                (aiActivePokemon.currentHP / getMaxHP(aiActivePokemon)) * 100
-              }
-              className="w-40"
-            />
-            <p>
-              HP: {aiActivePokemon.currentHP} / {getMaxHP(aiActivePokemon)}
-            </p>
-            {aiActivePokemon.status && <p>Status: {aiActivePokemon.status}</p>}
-          </div>
-        </div>
-        <div className="mb-4">
-          <h4 className="font-bold mb-2">Your Team:</h4>
-          {userTeamState.map((pokemon, index) => (
-            <div key={index} className="flex items-center space-x-2 mb-2">
-              <span
-                className={`capitalize ${pokemon.currentHP === 0 ? 'text-red-500' : ''}`}
-              >
-                {pokemon.name}
-              </span>
-              <Progress
-                value={(pokemon.currentHP / getMaxHP(pokemon)) * 100}
-                className="w-24"
-              />
-            </div>
-          ))}
+        <div className="flex justify-between items-center mb-8">
+          {renderPokemonCard(userActivePokemon, true)}
+          <div className="text-4xl font-bold">VS</div>
+          {renderPokemonCard(aiActivePokemon, false)}
         </div>
 
-        {/* Add move selection buttons */}
-        <div className="mb-4">
+        <div className="mb-6">
+          <h4 className="font-bold mb-2">Your Team:</h4>
+          <div className="flex justify-center space-x-4">
+            {userTeamState.map((pokemon, index) => (
+              <motion.div
+                key={index}
+                className={`w-16 h-16 rounded-full overflow-hidden ${
+                  pokemon.currentHP === 0 ? 'opacity-50 grayscale' : ''
+                }`}
+                whileHover={{ scale: 1.1 }}
+              >
+                <Image
+                  src={pokemon.sprites.front_default}
+                  alt={pokemon.name}
+                  width={64}
+                  height={64}
+                  className="pixelated"
+                />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-6">
           <h4 className="font-bold mb-2">Select a Move:</h4>
           <div className="grid grid-cols-2 gap-2">
             {userActivePokemon.moves.slice(0, 4).map((move) => (
@@ -595,6 +635,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
                   handleTurn(userActivePokemon, aiActivePokemon, move.move.name)
                 }
                 disabled={!isUserTurn}
+                className="capitalize"
               >
                 {move.move.name}
               </Button>
@@ -604,10 +645,21 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
 
         <div>
           <h4 className="font-bold mb-2">Battle Log:</h4>
-          <div className="h-40 overflow-y-auto border p-2">
-            {battleLog.map((log, index) => (
-              <p key={index}>{log}</p>
-            ))}
+          <div className="h-40 overflow-y-auto border p-2 rounded-lg">
+            <AnimatePresence>
+              {battleLog.map((log, index) => (
+                <motion.p
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                  className="mb-1"
+                >
+                  {log}
+                </motion.p>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       </CardContent>
