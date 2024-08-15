@@ -54,18 +54,16 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [isUserTurn, setIsUserTurn] = useState(true);
   const [battleAI, setBattleAI] = useState<BattleAI | null>(null);
+  const [userTeamState, setUserTeamState] = useState<PokemonBattleState[]>([]);
+  const [aiTeamState, setAiTeamState] = useState<PokemonBattleState[]>([]);
 
   useEffect(() => {
     if (aiActivePokemon && userActivePokemon) {
       setBattleAI(
-        new BattleAI(
-          aiActivePokemon,
-          userActivePokemon,
-          aiTeam as PokemonBattleState[]
-        )
+        new BattleAI(aiActivePokemon, userActivePokemon, aiTeamState)
       );
     }
-  }, [aiActivePokemon, userActivePokemon, aiTeam]);
+  }, [aiActivePokemon, userActivePokemon, aiTeamState]);
 
   useEffect(() => {
     if (!isUserTurn && aiActivePokemon && battleAI) {
@@ -109,9 +107,17 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
 
   useEffect(() => {
     const initializeBattle = async () => {
-      if (userTeam[0] && aiTeam[0]) {
-        setUserActivePokemon(await initializePokemon(userTeam[0]));
-        setAiActivePokemon(await initializePokemon(aiTeam[0]));
+      if (userTeam.length > 0 && aiTeam.length > 0) {
+        const initializedUserTeam = await Promise.all(
+          userTeam.map(initializePokemon)
+        );
+        const initializedAiTeam = await Promise.all(
+          aiTeam.map(initializePokemon)
+        );
+        setUserTeamState(initializedUserTeam);
+        setAiTeamState(initializedAiTeam);
+        setUserActivePokemon(initializedUserTeam[0]);
+        setAiActivePokemon(initializedAiTeam[0]);
       }
     };
     initializeBattle();
@@ -439,6 +445,21 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
           defender === userActivePokemon
         );
         turnLog.push(faintedMessage);
+
+        // Update the team state
+        if (defender === userActivePokemon) {
+          setUserTeamState((prevState) =>
+            prevState.map((p) =>
+              p.name === defender.name ? { ...p, currentHP: 0 } : p
+            )
+          );
+        } else {
+          setAiTeamState((prevState) =>
+            prevState.map((p) =>
+              p.name === defender.name ? { ...p, currentHP: 0 } : p
+            )
+          );
+        }
       }
 
       setBattleLog((prev) => [...prev, ...turnLog]);
@@ -454,25 +475,24 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     isUserPokemon: boolean
   ): Promise<string> => {
     if (isUserPokemon) {
-      const nextPokemon = userTeam.find(
-        (p) => p !== userActivePokemon && isPokemonHealthy(p)
+      const nextPokemon = userTeamState.find(
+        (p) => p.currentHP > 0 && p !== userActivePokemon
       );
       if (nextPokemon) {
-        const newPokemon = await initializePokemon(nextPokemon);
-        setUserActivePokemon(newPokemon);
-        return `${userActivePokemon?.name} fainted! Go, ${newPokemon.name}!`;
+        setUserActivePokemon(nextPokemon);
+        return `${userActivePokemon?.name} fainted! Go, ${nextPokemon.name}!`;
       } else {
         setUserActivePokemon(null);
         return 'All your Pokémon have fainted. You lost the battle!';
       }
     } else {
-      const nextPokemon = aiTeam.find(
-        (p) => p !== aiActivePokemon && isPokemonHealthy(p)
+      const nextPokemon = aiTeamState.find(
+        (p) => p.currentHP > 0 && p !== aiActivePokemon
       );
       if (nextPokemon) {
-        const newPokemon = await initializePokemon(nextPokemon);
-        setAiActivePokemon(newPokemon);
-        return `Opponent's ${aiActivePokemon?.name} fainted! They sent out ${newPokemon.name}!`;
+        setAiActivePokemon(nextPokemon);
+        setBattleAI(new BattleAI(nextPokemon, userActivePokemon!, aiTeamState));
+        return `Opponent's ${aiActivePokemon?.name} fainted! They sent out ${nextPokemon.name}!`;
       } else {
         setAiActivePokemon(null);
         return "All opponent's Pokémon have fainted. You won the battle!";
@@ -548,7 +568,25 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
           </div>
         </div>
         <div className="mb-4">
-          <h4 className="font-bold mb-2">Moves:</h4>
+          <h4 className="font-bold mb-2">Your Team:</h4>
+          {userTeamState.map((pokemon, index) => (
+            <div key={index} className="flex items-center space-x-2 mb-2">
+              <span
+                className={`capitalize ${pokemon.currentHP === 0 ? 'text-red-500' : ''}`}
+              >
+                {pokemon.name}
+              </span>
+              <Progress
+                value={(pokemon.currentHP / getMaxHP(pokemon)) * 100}
+                className="w-24"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Add move selection buttons */}
+        <div className="mb-4">
+          <h4 className="font-bold mb-2">Select a Move:</h4>
           <div className="grid grid-cols-2 gap-2">
             {userActivePokemon.moves.slice(0, 4).map((move) => (
               <Button
@@ -563,6 +601,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
             ))}
           </div>
         </div>
+
         <div>
           <h4 className="font-bold mb-2">Battle Log:</h4>
           <div className="h-40 overflow-y-auto border p-2">
