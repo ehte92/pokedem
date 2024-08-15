@@ -8,8 +8,10 @@ import {
   PokemonBattleState,
   PokemonDetails,
   StatusEffect,
+  TypeEffectiveness,
 } from '@/lib/types';
 
+import { BattleAI } from './battle-ai';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
@@ -51,6 +53,59 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     useState<PokemonBattleState | null>(null);
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [isUserTurn, setIsUserTurn] = useState(true);
+  const [battleAI, setBattleAI] = useState<BattleAI | null>(null);
+
+  useEffect(() => {
+    if (aiActivePokemon && userActivePokemon) {
+      setBattleAI(
+        new BattleAI(
+          aiActivePokemon,
+          userActivePokemon,
+          aiTeam as PokemonBattleState[]
+        )
+      );
+    }
+  }, [aiActivePokemon, userActivePokemon, aiTeam]);
+
+  useEffect(() => {
+    if (!isUserTurn && aiActivePokemon && battleAI) {
+      handleAITurn();
+    }
+  }, [isUserTurn, aiActivePokemon, battleAI]);
+
+  const handleAITurn = async () => {
+    if (!battleAI || !aiActivePokemon || !userActivePokemon) return;
+
+    if (battleAI.shouldSwitchPokemon()) {
+      const bestSwitch = battleAI.getBestSwitchOption();
+      if (bestSwitch) {
+        await handlePokemonSwitch(bestSwitch);
+        setIsUserTurn(true);
+        return;
+      }
+    }
+
+    const bestMove = await battleAI.decideBestMove();
+    await handleTurn(aiActivePokemon, userActivePokemon, bestMove);
+  };
+
+  const handlePokemonSwitch = async (newPokemon: PokemonBattleState) => {
+    setBattleLog((prev) => [
+      ...prev,
+      `AI switched from ${aiActivePokemon?.name} to ${newPokemon.name}!`,
+    ]);
+    setAiActivePokemon(newPokemon);
+    // Update the BattleAI instance with the new active Pokémon
+    if (userActivePokemon) {
+      setBattleAI(
+        new BattleAI(
+          newPokemon,
+          userActivePokemon,
+          aiTeam as PokemonBattleState[]
+        )
+      );
+    }
+  };
 
   useEffect(() => {
     const initializeBattle = async () => {
@@ -62,19 +117,19 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     initializeBattle();
   }, [userTeam, aiTeam]);
 
-  useEffect(() => {
-    if (!isUserTurn && aiActivePokemon) {
-      setTimeout(() => {
-        const aiMove = selectRandomMove(aiActivePokemon);
-        if (aiMove && userActivePokemon) {
-          handleTurn(aiActivePokemon, userActivePokemon, aiMove);
-        } else {
-          setBattleLog((prev) => [...prev, "AI couldn't make a move!"]);
-          setIsUserTurn(true);
-        }
-      }, 1000);
-    }
-  }, [isUserTurn, aiActivePokemon, userActivePokemon]);
+  // useEffect(() => {
+  //   if (!isUserTurn && aiActivePokemon) {
+  //     setTimeout(() => {
+  //       const aiMove = selectRandomMove(aiActivePokemon);
+  //       if (aiMove && userActivePokemon) {
+  //         handleTurn(aiActivePokemon, userActivePokemon, aiMove);
+  //       } else {
+  //         setBattleLog((prev) => [...prev, "AI couldn't make a move!"]);
+  //         setIsUserTurn(true);
+  //       }
+  //     }, 1000);
+  //   }
+  // }, [isUserTurn, aiActivePokemon, userActivePokemon]);
 
   const selectRandomMove = (pokemon: PokemonBattleState): string | null => {
     if (pokemon.moves.length === 0) return null;
@@ -434,7 +489,10 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     attackerType: string,
     defenderType: string
   ) => {
-    return typeEffectiveness[attackerType]?.[defenderType] || 1;
+    return (
+      (typeEffectiveness as TypeEffectiveness)[attackerType]?.[defenderType] ||
+      1
+    );
   };
 
   if (!userActivePokemon || !aiActivePokemon) {

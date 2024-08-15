@@ -46,6 +46,13 @@ export interface PokemonDetails {
   base_experience: number;
 }
 
+export interface PokemonBattleState extends PokemonDetails {
+  currentHP: number;
+  status: StatusEffect | null;
+  ability: Ability;
+  sleepCounter?: number;
+}
+
 export interface PokemonListItem {
   name: string;
   url: string;
@@ -151,12 +158,18 @@ export interface MoveDetails {
   }[];
 }
 
+export type TypeEffectiveness = {
+  [attackType: string]: {
+    [defenseType: string]: number;
+  };
+};
+
 export type StatusEffect =
+  | 'burn'
+  | 'freeze'
   | 'paralysis'
   | 'poison'
-  | 'burn'
   | 'sleep'
-  | 'freeze'
   | 'confusion'
   | 'flinch'
   | null;
