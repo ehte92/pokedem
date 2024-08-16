@@ -25,92 +25,21 @@ interface BattleSystemProps {
 }
 
 const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
-  const getMaxHP = (pokemon: PokemonDetails): number => {
-    return (
-      pokemon.stats.find((stat) => stat.stat.name === 'hp')?.base_stat || 100
-    );
-  };
-
-  const initializePokemon = async (
-    pokemon: PokemonDetails
-  ): Promise<PokemonBattleState> => {
-    const ability = pokemon.abilities[0]; // For simplicity, we're using the first ability
-    const abilityDetails = await fetchAbilityDetails(ability.ability.name);
-    return {
-      ...pokemon,
-      currentHP: getMaxHP(pokemon),
-      status: null,
-      ability: {
-        name: ability.ability.name,
-        effect:
-          abilityDetails.effect_entries.find(
-            (entry) => entry.language.name === 'en'
-          )?.short_effect || '',
-      },
-    };
-  };
-
   const [battleAI, setBattleAI] = useState<BattleAI | null>(null);
   const [userActivePokemon, setUserActivePokemon] =
     useState<PokemonBattleState | null>(null);
   const [aiActivePokemon, setAiActivePokemon] =
     useState<PokemonBattleState | null>(null);
   const [battleLog, setBattleLog] = useState<string[]>([]);
-  const [isUserTurn, setIsUserTurn] = useState(true);
   const [userTeamState, setUserTeamState] = useState<PokemonBattleState[]>([]);
   const [aiTeamState, setAiTeamState] = useState<PokemonBattleState[]>([]);
   const [attackAnimation, setAttackAnimation] = useState<'user' | 'ai' | null>(
     null
   );
   const [isSwitching, setIsSwitching] = useState(false);
-
-  useEffect(() => {
-    if (aiActivePokemon && userActivePokemon) {
-      setBattleAI(
-        new BattleAI(aiActivePokemon, userActivePokemon, aiTeamState)
-      );
-    }
-  }, [aiActivePokemon, userActivePokemon, aiTeamState]);
-
-  useEffect(() => {
-    if (!isUserTurn && aiActivePokemon && battleAI) {
-      handleAITurn();
-    }
-  }, [isUserTurn, aiActivePokemon, battleAI]);
-
-  const handleAITurn = async () => {
-    if (!battleAI || !aiActivePokemon || !userActivePokemon) return;
-
-    if (battleAI.shouldSwitchPokemon()) {
-      const bestSwitch = battleAI.getBestSwitchOption();
-      if (bestSwitch) {
-        await handlePokemonSwitch(bestSwitch);
-        setIsUserTurn(true);
-        return;
-      }
-    }
-
-    const bestMove = await battleAI.decideBestMove();
-    await handleTurn(aiActivePokemon, userActivePokemon, bestMove);
-  };
-
-  const handlePokemonSwitch = async (newPokemon: PokemonBattleState) => {
-    setBattleLog((prev) => [
-      ...prev,
-      `AI switched from ${aiActivePokemon?.name} to ${newPokemon.name}!`,
-    ]);
-    setAiActivePokemon(newPokemon);
-    // Update the BattleAI instance with the new active Pokémon
-    if (userActivePokemon) {
-      setBattleAI(
-        new BattleAI(
-          newPokemon,
-          userActivePokemon,
-          aiTeam as PokemonBattleState[]
-        )
-      );
-    }
-  };
+  const [turnOrder, setTurnOrder] = useState<('user' | 'ai')[]>([]);
+  const [userMove, setUserMove] = useState<string | null>(null);
+  const [aiMove, setAiMove] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeBattle = async () => {
@@ -130,12 +59,209 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     initializeBattle();
   }, [userTeam, aiTeam]);
 
+  useEffect(() => {
+    if (aiActivePokemon && userActivePokemon) {
+      setBattleAI(
+        new BattleAI(aiActivePokemon, userActivePokemon, aiTeamState)
+      );
+    }
+  }, [aiActivePokemon, userActivePokemon, aiTeamState]);
+
+  const initializePokemon = async (
+    pokemon: PokemonDetails
+  ): Promise<PokemonBattleState> => {
+    const ability = pokemon.abilities[0];
+    const abilityDetails = await fetchAbilityDetails(ability.ability.name);
+    return {
+      ...pokemon,
+      currentHP: getMaxHP(pokemon),
+      status: null,
+      ability: {
+        name: ability.ability.name,
+        effect:
+          abilityDetails.effect_entries.find(
+            (entry) => entry.language.name === 'en'
+          )?.short_effect || '',
+      },
+    };
+  };
+
+  const getMaxHP = (pokemon: PokemonDetails): number => {
+    return (
+      pokemon.stats.find((stat) => stat.stat.name === 'hp')?.base_stat || 100
+    );
+  };
+
   const estimateLevel = (pokemon: PokemonDetails): number => {
     const baseStatTotal = pokemon.stats.reduce(
       (total, stat) => total + stat.base_stat,
       0
     );
     return Math.min(100, Math.max(1, Math.floor(baseStatTotal / 6)));
+  };
+
+  const determineActionOrder = () => {
+    if (!userActivePokemon || !aiActivePokemon) return;
+
+    const userSpeed =
+      userActivePokemon.stats.find((stat) => stat.stat.name === 'speed')
+        ?.base_stat || 0;
+    const aiSpeed =
+      aiActivePokemon.stats.find((stat) => stat.stat.name === 'speed')
+        ?.base_stat || 0;
+
+    if (userSpeed > aiSpeed) {
+      setTurnOrder(['user', 'ai']);
+    } else if (aiSpeed > userSpeed) {
+      setTurnOrder(['ai', 'user']);
+    } else {
+      setTurnOrder(Math.random() < 0.5 ? ['user', 'ai'] : ['ai', 'user']);
+    }
+  };
+
+  const handleUserMove = (moveName: string) => {
+    setUserMove(moveName);
+    handleAIMove();
+  };
+
+  const handleAIMove = async () => {
+    if (!battleAI || !aiActivePokemon || !userActivePokemon) return;
+    const bestMove = await battleAI.decideBestMove();
+    setAiMove(bestMove);
+    determineActionOrder();
+  };
+
+  useEffect(() => {
+    if (turnOrder.length > 0 && userMove && aiMove) {
+      executeTurn();
+    }
+  }, [turnOrder, userMove, aiMove]);
+
+  const handleBattleEnd = () => {
+    if (!userActivePokemon) {
+      setBattleLog((prev) => [
+        ...prev,
+        'You have no more Pokémon. You lost the battle!',
+      ]);
+    } else if (!aiActivePokemon) {
+      setBattleLog((prev) => [
+        ...prev,
+        'Opponent has no more Pokémon. You won the battle!',
+      ]);
+    }
+    // You might want to add some UI state to show a "Battle Over" screen or return to the main menu
+  };
+
+  const executeTurn = async () => {
+    for (const actor of turnOrder) {
+      if (actor === 'user' && userActivePokemon && aiActivePokemon) {
+        await handleTurn(userActivePokemon, aiActivePokemon, userMove!);
+      } else if (actor === 'ai' && aiActivePokemon && userActivePokemon) {
+        await handleTurn(aiActivePokemon, userActivePokemon, aiMove!);
+      }
+
+      if (!userActivePokemon || !aiActivePokemon) {
+        // A Pokémon has fainted, end the turn early
+        break;
+      }
+    }
+
+    setUserMove(null);
+    setAiMove(null);
+    setTurnOrder([]);
+
+    // Check if the battle should continue
+    if (userActivePokemon && aiActivePokemon) {
+      // Prepare for the next turn
+      setIsSwitching(false);
+    } else {
+      // Battle has ended
+      handleBattleEnd();
+    }
+  };
+
+  const handleTurn = async (
+    attacker: PokemonBattleState,
+    defender: PokemonBattleState,
+    moveName: string
+  ) => {
+    let turnLog: string[] = [];
+    setAttackAnimation(attacker === userActivePokemon ? 'user' : 'ai');
+
+    // Handle pre-move status effects and abilities
+    const statusEffects = handleStatusEffects(attacker);
+    turnLog.push(...statusEffects);
+    if (statusEffects.some((effect) => effect.includes("can't move"))) {
+      setBattleLog((prev) => [...prev, ...turnLog]);
+      setTimeout(() => setAttackAnimation(null), 1000);
+      return;
+    }
+
+    try {
+      const moveDetails = await fetchMoveDetails(moveName);
+
+      // Check if the move hits
+      if (
+        moveDetails.accuracy !== null &&
+        Math.random() > moveDetails.accuracy / 100
+      ) {
+        turnLog.push(`${attacker.name}'s ${moveName} missed!`);
+      } else {
+        // Calculate and apply damage
+        if (moveDetails.power !== null) {
+          const damage = calculateDamage(attacker, defender, moveDetails);
+          defender.currentHP = Math.max(0, defender.currentHP - damage);
+          turnLog.push(
+            `${attacker.name} used ${moveName} and dealt ${damage} damage to ${defender.name}!`
+          );
+        } else {
+          turnLog.push(`${attacker.name} used ${moveName}!`);
+        }
+
+        // Apply move effects
+        turnLog.push(...handleMoveEffects(attacker, defender, moveDetails));
+      }
+
+      // Handle post-move status effects
+      turnLog.push(...handleStatusEffects(defender));
+
+      if (defender.currentHP === 0) {
+        const faintedMessage = await handlePokemonFainted(
+          defender === userActivePokemon
+        );
+        turnLog.push(faintedMessage);
+
+        // Update the team state
+        if (defender === userActivePokemon) {
+          setUserTeamState((prevState) =>
+            prevState.map((p) =>
+              p.name === defender.name ? { ...p, currentHP: 0 } : p
+            )
+          );
+        } else {
+          setAiTeamState((prevState) =>
+            prevState.map((p) =>
+              p.name === defender.name ? { ...p, currentHP: 0 } : p
+            )
+          );
+        }
+
+        // Immediately update the active Pokémon state
+        if (defender === userActivePokemon) {
+          setUserActivePokemon(
+            userTeamState.find((p) => p.currentHP > 0) || null
+          );
+        } else {
+          setAiActivePokemon(aiTeamState.find((p) => p.currentHP > 0) || null);
+        }
+      }
+
+      setBattleLog((prev) => [...prev, ...turnLog]);
+    } catch (error) {
+      console.error('Error handling turn:', error);
+      setBattleLog((prev) => [...prev, 'An error occurred during the turn.']);
+    }
+    setTimeout(() => setAttackAnimation(null), 1000);
   };
 
   const calculateDamage = (
@@ -199,29 +325,14 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     return Math.max(1, Math.min(damage, defender.currentHP));
   };
 
-  const canApplyStatus = (
-    pokemon: PokemonBattleState,
-    status: StatusEffect
-  ): boolean => {
-    if (status === null) return true; // Always allow clearing status
-
-    switch (pokemon.ability.name.toLowerCase()) {
-      case 'limber':
-        return status !== 'paralysis';
-      case 'immunity':
-        return status !== 'poison';
-      case 'insomnia':
-      case 'vital spirit':
-        return status !== 'sleep';
-      case 'magma armor':
-        return status !== 'freeze';
-      case 'water veil':
-        return status !== 'burn';
-      case 'own tempo':
-        return status !== 'confusion';
-      default:
-        return true;
-    }
+  const calculateTypeEffectiveness = (
+    attackerType: string,
+    defenderType: string
+  ) => {
+    return (
+      (typeEffectiveness as TypeEffectiveness)[attackerType]?.[defenderType] ||
+      1
+    );
   };
 
   const handleStatusEffects = (pokemon: PokemonBattleState): string[] => {
@@ -230,7 +341,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
       case 'paralysis':
         if (Math.random() < 0.25) {
           effects.push(`${pokemon.name} is paralyzed and can't move!`);
-          return effects;
         }
         break;
       case 'poison':
@@ -266,7 +376,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
         if (pokemon.sleepCounter > 0) {
           pokemon.sleepCounter--;
           effects.push(`${pokemon.name} is fast asleep.`);
-          return effects;
         } else {
           pokemon.status = null;
           effects.push(`${pokemon.name} woke up!`);
@@ -278,7 +387,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
           effects.push(`${pokemon.name} thawed out!`);
         } else {
           effects.push(`${pokemon.name} is frozen solid!`);
-          return effects;
         }
         break;
     }
@@ -374,99 +482,28 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     return effects;
   };
 
-  const handleTurn = async (
-    attacker: PokemonBattleState,
-    defender: PokemonBattleState,
-    moveName: string
-  ) => {
-    let turnLog: string[] = [];
-    setAttackAnimation(attacker === userActivePokemon ? 'user' : 'ai');
+  const canApplyStatus = (
+    pokemon: PokemonBattleState,
+    status: StatusEffect
+  ): boolean => {
+    if (status === null) return true; // Always allow clearing status
 
-    // Handle pre-move status effects and abilities
-    turnLog.push(...handleStatusEffects(attacker));
-    if (
-      turnLog.length > 0 &&
-      ['paralysis', 'sleep', 'freeze'].includes(attacker.status || '')
-    ) {
-      if (
-        attacker.ability.name.toLowerCase() === 'magic guard' &&
-        attacker.status === 'burn'
-      ) {
-        turnLog.push(`${attacker.name}'s Magic Guard prevented burn damage!`);
-      } else {
-        setBattleLog((prev) => [...prev, ...turnLog]);
-        setIsUserTurn(!isUserTurn);
-        return;
-      }
-    }
-
-    try {
-      const moveDetails = await fetchMoveDetails(moveName);
-
-      // Check if the move hits
-      if (
-        moveDetails.accuracy !== null &&
-        Math.random() > moveDetails.accuracy / 100
-      ) {
-        turnLog.push(`${attacker.name}'s ${moveName} missed!`);
-      } else {
-        // Calculate and apply damage
-        if (moveDetails.power !== null) {
-          const damage = calculateDamage(attacker, defender, moveDetails);
-          defender.currentHP = Math.max(0, defender.currentHP - damage);
-          turnLog.push(
-            `${attacker.name} used ${moveName} and dealt ${damage} damage to ${defender.name}!`
-          );
-        } else {
-          turnLog.push(`${attacker.name} used ${moveName}!`);
-        }
-
-        // Apply move effects
-        turnLog.push(...handleMoveEffects(attacker, defender, moveDetails));
-      }
-
-      // Handle post-move status effects
-      turnLog.push(...handleStatusEffects(defender));
-
-      if (defender.currentHP === 0) {
-        const faintedMessage = await handlePokemonFainted(
-          defender === userActivePokemon
-        );
-        turnLog.push(faintedMessage);
-
-        // Update the team state
-        if (defender === userActivePokemon) {
-          setUserTeamState((prevState) =>
-            prevState.map((p) =>
-              p.name === defender.name ? { ...p, currentHP: 0 } : p
-            )
-          );
-        } else {
-          setAiTeamState((prevState) =>
-            prevState.map((p) =>
-              p.name === defender.name ? { ...p, currentHP: 0 } : p
-            )
-          );
-        }
-      }
-
-      setBattleLog((prev) => [...prev, ...turnLog]);
-      setIsUserTurn(!isUserTurn);
-    } catch (error) {
-      console.error('Error handling turn:', error);
-      setBattleLog((prev) => [...prev, 'An error occurred during the turn.']);
-      setIsUserTurn(!isUserTurn);
-    }
-    setTimeout(() => setAttackAnimation(null), 1000);
-    setIsUserTurn(!isUserTurn);
-  };
-
-  const handleSwitch = (newPokemon: PokemonBattleState) => {
-    if (newPokemon.currentHP > 0 && newPokemon !== userActivePokemon) {
-      setUserActivePokemon(newPokemon);
-      setBattleLog((prev) => [...prev, `Go, ${newPokemon.name}!`]);
-      setIsSwitching(false);
-      setIsUserTurn(false); // End the user's turn after switching
+    switch (pokemon.ability.name.toLowerCase()) {
+      case 'limber':
+        return status !== 'paralysis';
+      case 'immunity':
+        return status !== 'poison';
+      case 'insomnia':
+      case 'vital spirit':
+        return status !== 'sleep';
+      case 'magma armor':
+        return status !== 'freeze';
+      case 'water veil':
+        return status !== 'burn';
+      case 'own tempo':
+        return status !== 'confusion';
+      default:
+        return true;
     }
   };
 
@@ -499,27 +536,19 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     }
   };
 
-  const calculateTypeEffectiveness = (
-    attackerType: string,
-    defenderType: string
-  ) => {
-    return (
-      (typeEffectiveness as TypeEffectiveness)[attackerType]?.[defenderType] ||
-      1
-    );
-  };
+  const handleSwitch = (newPokemon: PokemonBattleState) => {
+    if (newPokemon.currentHP > 0 && newPokemon !== userActivePokemon) {
+      setUserActivePokemon(newPokemon);
+      setBattleLog((prev) => [...prev, `Go, ${newPokemon.name}!`]);
+      setIsSwitching(false);
 
-  if (!userActivePokemon || !aiActivePokemon) {
-    return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardContent>
-          <p className="text-center font-bold text-xl">
-            {battleLog[battleLog.length - 1]}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+      // If there was no active Pokémon before (i.e., sending out after a faint),
+      // we need to trigger the AI's move
+      if (!userActivePokemon) {
+        handleAIMove();
+      }
+    }
+  };
 
   const renderHealthBar = (pokemon: PokemonBattleState) => {
     const hpPercentage = (pokemon.currentHP / getMaxHP(pokemon)) * 100;
@@ -567,15 +596,25 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     </div>
   );
 
+  if (!userActivePokemon || !aiActivePokemon) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardContent>
+          <p className="text-center font-bold text-xl">
+            {battleLog[battleLog.length - 1]}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-4xl mx-auto overflow-hidden">
       <CardContent className="p-6">
         <div className="relative h-80 bg-gradient-to-b from-sky-400 to-sky-200 rounded-lg mb-6">
-          {/* Opponent's info box */}
           <div className="absolute top-4 left-4 z-10">
             {renderPokemonInfo(aiActivePokemon, false)}
           </div>
-          {/* Opponent's Pokémon sprite */}
           <div className="absolute top-4 right-4 z-20">
             <Image
               src={aiActivePokemon.sprites.front_default}
@@ -585,11 +624,9 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
               className="drop-shadow-lg"
             />
           </div>
-          {/* User's info box */}
           <div className="absolute bottom-4 right-4 z-10">
             {renderPokemonInfo(userActivePokemon, true)}
           </div>
-          {/* User's Pokémon sprite */}
           <div className="absolute bottom-4 left-4 z-20">
             <Image
               src={
@@ -605,29 +642,28 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
         </div>
 
         <div className="bg-white shadow-lg rounded-lg p-4">
-          {isSwitching ? (
+          {isSwitching ||
+          (!userActivePokemon && userTeamState.some((p) => p.currentHP > 0)) ? (
             <div>
-              <h4 className="font-bold mb-3">Switch Pokémon:</h4>
+              <h4 className="font-bold mb-3">
+                {userActivePokemon
+                  ? 'Switch Pokémon:'
+                  : 'Send out next Pokémon:'}
+              </h4>
               <PokemonSwitcher
-                team={userTeamState}
+                team={userTeamState.filter((p) => p.currentHP > 0)}
                 activePokemon={userActivePokemon}
                 onSwitch={handleSwitch}
               />
             </div>
-          ) : (
+          ) : userActivePokemon ? (
             <>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 {userActivePokemon.moves.slice(0, 4).map((move) => (
                   <Button
                     key={move.move.name}
-                    onClick={() =>
-                      handleTurn(
-                        userActivePokemon,
-                        aiActivePokemon,
-                        move.move.name
-                      )
-                    }
-                    disabled={!isUserTurn}
+                    onClick={() => handleUserMove(move.move.name)}
+                    disabled={!!userMove}
                     className="capitalize bg-blue-500 text-white hover:bg-blue-600 transition-colors"
                   >
                     {move.move.name}
@@ -637,7 +673,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   onClick={() => setIsSwitching(true)}
-                  disabled={!isUserTurn}
+                  disabled={!!userMove}
                   className="bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
                 >
                   Switch Pokémon
@@ -650,6 +686,8 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
                 </Button>
               </div>
             </>
+          ) : (
+            <p className="text-center font-bold text-xl">Battle has ended</p>
           )}
         </div>
 

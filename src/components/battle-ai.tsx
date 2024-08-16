@@ -81,6 +81,16 @@ export class BattleAI {
       score *= stab;
     }
 
+    // Consider opponent's status
+    if (this.opponentPokemon.status) {
+      score += 10; // Slight bonus if opponent already has a status condition
+    }
+
+    // Consider AI Pokemon's status
+    if (this.aiPokemon.status) {
+      score -= 10; // Slight penalty if AI Pokemon has a status condition
+    }
+
     return score;
   }
 

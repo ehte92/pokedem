@@ -23,6 +23,12 @@ const PokemonSwitcher: React.FC<PokemonSwitcherProps> = ({
 }) => {
   const { theme } = useTheme();
 
+  const getMaxHP = (pokemon: PokemonBattleState): number => {
+    return (
+      pokemon.stats.find((stat) => stat.stat.name === 'hp')?.base_stat || 100
+    );
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4">
       {team.map((pokemon) => (
@@ -60,12 +66,13 @@ const PokemonSwitcher: React.FC<PokemonSwitcherProps> = ({
                   ))}
                 </div>
                 <p className="text-sm mt-1">
-                  HP: {pokemon.currentHP} /{' '}
-                  {
-                    pokemon.stats.find((stat) => stat.stat.name === 'hp')
-                      ?.base_stat
-                  }
+                  HP: {pokemon.currentHP} / {getMaxHP(pokemon)}
                 </p>
+                {pokemon.status && (
+                  <Badge variant="outline" className="mt-1">
+                    {pokemon.status}
+                  </Badge>
+                )}
               </div>
             </CardContent>
           </Card>
