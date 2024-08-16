@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { fetchAbilityDetails, fetchMoveDetails } from '@/lib/api';
 import { typeColors, typeEffectiveness } from '@/lib/constants';
 import {
-  Ability,
   MoveDetails,
   PokemonBattleState,
   PokemonDetails,
@@ -20,7 +19,6 @@ import PokemonSwitcher from './pokemin-switcher';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Progress } from './ui/progress';
 
 interface BattleSystemProps {
   userTeam: PokemonDetails[];
@@ -501,11 +499,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
         return "All opponent's Pokémon have fainted. You won the battle!";
       }
     }
-  };
-
-  const isPokemonHealthy = (pokemon: PokemonDetails): boolean => {
-    const hpStat = pokemon.stats.find((s) => s.stat.name === 'hp');
-    return hpStat ? hpStat.base_stat > 0 : false;
   };
 
   const calculateTypeEffectiveness = (
