@@ -26,6 +26,7 @@ export interface PokemonMove {
 
 export interface PokemonSprites {
   front_default: string;
+  back_default?: string;
   other: {
     'official-artwork': {
       front_default: string;

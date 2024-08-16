@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTheme } from 'next-themes';
 import Image from 'next/image';
 
 import { fetchAbilityDetails, fetchMoveDetails } from '@/lib/api';
-import { typeColors, typeEffectiveness } from '@/lib/constants';
+import { typeEffectiveness } from '@/lib/constants';
 import {
   MoveDetails,
   PokemonBattleState,
@@ -18,7 +17,7 @@ import { BattleAI } from './battle-ai';
 import PokemonSwitcher from './pokemin-switcher';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 
 interface BattleSystemProps {
   userTeam: PokemonDetails[];
@@ -51,7 +50,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     };
   };
 
-  const { theme } = useTheme();
   const [battleAI, setBattleAI] = useState<BattleAI | null>(null);
   const [userActivePokemon, setUserActivePokemon] =
     useState<PokemonBattleState | null>(null);
@@ -514,11 +512,10 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
   if (!userActivePokemon || !aiActivePokemon) {
     return (
       <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle>Battle Ended</CardTitle>
-        </CardHeader>
         <CardContent>
-          <p>{battleLog[battleLog.length - 1]}</p>
+          <p className="text-center font-bold text-xl">
+            {battleLog[battleLog.length - 1]}
+          </p>
         </CardContent>
       </Card>
     );
@@ -534,7 +531,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
           : 'bg-red-500';
 
     return (
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mt-2">
+      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
         <motion.div
           className={`h-2.5 rounded-full ${barColor}`}
           initial={{ width: '100%' }}
@@ -545,104 +542,81 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
     );
   };
 
-  const renderPokemonCard = (pokemon: PokemonBattleState, isUser: boolean) => (
-    <motion.div
-      className={`flex flex-col items-center p-4 rounded-lg shadow-lg ${
-        theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-      }`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5 }}
+  const renderPokemonInfo = (pokemon: PokemonBattleState, isUser: boolean) => (
+    <div
+      className={`bg-white shadow-md rounded-lg p-3 ${isUser ? 'self-end' : 'self-start'}`}
     >
-      <motion.div
-        animate={
-          attackAnimation === (isUser ? 'user' : 'ai')
-            ? { x: [0, 10, -10, 10, 0] }
-            : {}
-        }
-        transition={{ duration: 0.5 }}
-      >
-        <Image
-          src={pokemon.sprites.front_default}
-          alt={pokemon.name}
-          width={120}
-          height={120}
-          className="pixelated"
-        />
-      </motion.div>
-      <h3 className="text-lg font-semibold mt-2 capitalize">{pokemon.name}</h3>
-      <div className="flex space-x-2 mt-2">
-        {pokemon.types.map((type) => (
-          <Badge
-            key={type.type.name}
-            className={`${typeColors[type.type.name] || 'bg-gray-500'} text-white`}
-          >
-            {type.type.name}
-          </Badge>
-        ))}
+      <div className="flex justify-between items-center">
+        <span className="font-bold text-lg capitalize">{pokemon.name}</span>
+        <span className="text-sm text-gray-600">
+          Lv{estimateLevel(pokemon)}
+        </span>
       </div>
       {renderHealthBar(pokemon)}
-      <p className="mt-2">
-        HP: {pokemon.currentHP} / {getMaxHP(pokemon)}
-      </p>
+      <div className="flex justify-between items-center mt-1">
+        <span className="text-sm text-gray-600">HP</span>
+        <span className="text-sm text-gray-600">
+          {pokemon.currentHP}/{getMaxHP(pokemon)}
+        </span>
+      </div>
       {pokemon.status && (
-        <Badge variant="destructive" className="mt-2">
+        <Badge variant="outline" className="mt-2">
           {pokemon.status}
         </Badge>
       )}
-    </motion.div>
+    </div>
   );
 
   return (
     <Card className="w-full max-w-4xl mx-auto overflow-hidden">
-      <CardHeader>
-        <CardTitle className="text-center text-2xl">Pokémon Battle</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-between items-center mb-8">
-          {renderPokemonCard(userActivePokemon, true)}
-          <div className="text-4xl font-bold">VS</div>
-          {renderPokemonCard(aiActivePokemon, false)}
-        </div>
-
-        {isSwitching ? (
-          <div className="mb-6">
-            <h4 className="font-bold mb-2">Switch Pokémon:</h4>
-            <PokemonSwitcher
-              team={userTeamState}
-              activePokemon={userActivePokemon}
-              onSwitch={handleSwitch}
+      <CardContent className="p-6">
+        <div className="relative h-80 bg-gradient-to-b from-sky-400 to-sky-200 rounded-lg mb-6">
+          {/* Opponent's info box */}
+          <div className="absolute top-4 left-4 z-10">
+            {renderPokemonInfo(aiActivePokemon, false)}
+          </div>
+          {/* Opponent's Pokémon sprite */}
+          <div className="absolute top-4 right-4 z-20">
+            <Image
+              src={aiActivePokemon.sprites.front_default}
+              alt={aiActivePokemon.name}
+              width={180}
+              height={180}
+              className="drop-shadow-lg"
             />
           </div>
-        ) : (
-          <>
-            <div className="mb-6">
-              <h4 className="font-bold mb-2">Your Team:</h4>
-              <div className="flex justify-center space-x-4">
-                {userTeamState.map((pokemon, index) => (
-                  <motion.div
-                    key={index}
-                    className={`w-16 h-16 rounded-full overflow-hidden ${
-                      pokemon.currentHP === 0 ? 'opacity-50 grayscale' : ''
-                    } ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <Image
-                      src={pokemon.sprites.front_default}
-                      alt={pokemon.name}
-                      width={64}
-                      height={64}
-                      className="pixelated"
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+          {/* User's info box */}
+          <div className="absolute bottom-4 right-4 z-10">
+            {renderPokemonInfo(userActivePokemon, true)}
+          </div>
+          {/* User's Pokémon sprite */}
+          <div className="absolute bottom-4 left-4 z-20">
+            <Image
+              src={
+                userActivePokemon.sprites.back_default ||
+                userActivePokemon.sprites.front_default
+              }
+              alt={userActivePokemon.name}
+              width={200}
+              height={200}
+              className="drop-shadow-lg"
+            />
+          </div>
+        </div>
 
-            <div className="mb-6">
-              <h4 className="font-bold mb-2">Select a Move:</h4>
-              <div className="grid grid-cols-2 gap-2">
+        <div className="bg-white shadow-lg rounded-lg p-4">
+          {isSwitching ? (
+            <div>
+              <h4 className="font-bold mb-3">Switch Pokémon:</h4>
+              <PokemonSwitcher
+                team={userTeamState}
+                activePokemon={userActivePokemon}
+                onSwitch={handleSwitch}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 {userActivePokemon.moves.slice(0, 4).map((move) => (
                   <Button
                     key={move.move.name}
@@ -654,48 +628,47 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
                       )
                     }
                     disabled={!isUserTurn}
-                    className="capitalize"
+                    className="capitalize bg-blue-500 text-white hover:bg-blue-600 transition-colors"
                   >
                     {move.move.name}
                   </Button>
                 ))}
               </div>
-            </div>
-
-            <Button
-              onClick={() => setIsSwitching(true)}
-              disabled={!isUserTurn}
-              className="w-full mb-4"
-            >
-              Switch Pokémon
-            </Button>
-          </>
-        )}
-
-        <div>
-          <h4 className="font-bold mb-2">Battle Log:</h4>
-          <div
-            className={`h-40 overflow-y-auto border p-2 rounded-lg ${
-              theme === 'dark'
-                ? 'bg-gray-800 text-white border-gray-700'
-                : 'bg-white text-gray-900 border-gray-200'
-            }`}
-          >
-            <AnimatePresence>
-              {battleLog.map((log, index) => (
-                <motion.p
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.5 }}
-                  className="mb-1"
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => setIsSwitching(true)}
+                  disabled={!isUserTurn}
+                  className="bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
                 >
-                  {log}
-                </motion.p>
-              ))}
-            </AnimatePresence>
-          </div>
+                  Switch Pokémon
+                </Button>
+                <Button
+                  className="bg-red-500 text-white hover:bg-red-600 transition-colors"
+                  disabled={true}
+                >
+                  Forfeit
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="mt-6 bg-white shadow-lg rounded-lg p-4 h-40 overflow-y-auto">
+          <h4 className="font-bold mb-2">Battle Log:</h4>
+          <AnimatePresence>
+            {battleLog.slice(-5).map((log, index) => (
+              <motion.p
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="mb-1 text-sm text-gray-700"
+              >
+                {log}
+              </motion.p>
+            ))}
+          </AnimatePresence>
         </div>
       </CardContent>
     </Card>
