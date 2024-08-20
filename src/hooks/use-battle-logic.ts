@@ -14,6 +14,8 @@ import {
   StatusEffect,
 } from '@/lib/types';
 
+type BattleState = 'initializing' | 'active' | 'ended';
+
 export const useBattleLogic = (
   userTeam: PokemonDetails[],
   aiTeam: PokemonDetails[]
@@ -33,6 +35,7 @@ export const useBattleLogic = (
   const [turnOrder, setTurnOrder] = useState<('user' | 'ai')[]>([]);
   const [userMove, setUserMove] = useState<string | null>(null);
   const [aiMove, setAiMove] = useState<string | null>(null);
+  const [battleState, setBattleState] = useState<BattleState>('initializing');
 
   useEffect(() => {
     const initializeBattle = async () => {
@@ -47,6 +50,7 @@ export const useBattleLogic = (
         setAiTeamState(initializedAiTeam);
         setUserActivePokemon(initializedUserTeam[0]);
         setAiActivePokemon(initializedAiTeam[0]);
+        setBattleState('active');
       }
     };
     initializeBattle();
@@ -419,17 +423,8 @@ export const useBattleLogic = (
   };
 
   const handleBattleEnd = () => {
-    if (!userActivePokemon) {
-      setBattleLog((prev) => [
-        ...prev,
-        'You have no more Pokémon. You lost the battle!',
-      ]);
-    } else if (!aiActivePokemon) {
-      setBattleLog((prev) => [
-        ...prev,
-        'Opponent has no more Pokémon. You won the battle!',
-      ]);
-    }
+    setBattleState('ended');
+    // Add any other logic for ending the battle
   };
 
   return {
@@ -439,8 +434,12 @@ export const useBattleLogic = (
     aiTeamState,
     battleLog,
     isSwitching,
+    setIsSwitching,
+    attackAnimation,
     handleUserMove,
     handleSwitch,
     userMove,
+    battleState,
+    handleBattleEnd,
   };
 };

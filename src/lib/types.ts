@@ -180,9 +180,24 @@ export interface Ability {
   effect: string;
 }
 
-export interface PokemonBattleState extends PokemonDetails {
+export interface PokemonBattleMove extends PokemonMove {
+  pp: number;
+  maxPp: number;
+}
+
+export interface PokemonBattleState extends Omit<PokemonDetails, 'moves'> {
   currentHP: number;
   status: StatusEffect;
-  sleepCounter?: number;
   ability: Ability;
+  sleepCounter?: number;
+  statStages: {
+    attack: number;
+    defense: number;
+    'special-attack': number;
+    'special-defense': number;
+    speed: number;
+    accuracy: number;
+    evasion: number;
+  };
+  moves: PokemonBattleMove[];
 }
