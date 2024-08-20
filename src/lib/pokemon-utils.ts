@@ -1,6 +1,7 @@
 import { fetchAbilityDetails, fetchMoveDetails } from '@/lib/api';
 import {
   Ability,
+  MoveDetails,
   PokemonBattleMove,
   PokemonBattleState,
   PokemonDetails,
@@ -77,7 +78,7 @@ export const calculateTypeEffectiveness = (
 export const calculateDamage = (
   attacker: PokemonBattleState,
   defender: PokemonBattleState,
-  moveDetails: any // Replace 'any' with your MoveDetails type
+  moveDetails: MoveDetails
 ): number => {
   const attackStat =
     attacker.stats.find(

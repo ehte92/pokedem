@@ -321,6 +321,7 @@ export const useBattleLogic = (
         return `${userActivePokemon?.name} fainted! Go, ${nextPokemon.name}!`;
       } else {
         setUserActivePokemon(null);
+        setBattleState('ended');
         return 'All your Pokémon have fainted. You lost the battle!';
       }
     } else {
@@ -333,9 +334,15 @@ export const useBattleLogic = (
         return `Opponent's ${aiActivePokemon?.name} fainted! They sent out ${nextPokemon.name}!`;
       } else {
         setAiActivePokemon(null);
+        setBattleState('ended');
         return "All opponent's Pokémon have fainted. You won the battle!";
       }
     }
+  };
+
+  const handleBattleEnd = () => {
+    setBattleState('ended');
+    setBattleLog((prev) => [...prev, 'The battle has ended.']);
   };
 
   const handleTurn = async (
@@ -420,11 +427,6 @@ export const useBattleLogic = (
       setBattleLog((prev) => [...prev, 'An error occurred during the turn.']);
     }
     setTimeout(() => setAttackAnimation(null), 1000);
-  };
-
-  const handleBattleEnd = () => {
-    setBattleState('ended');
-    // Add any other logic for ending the battle
   };
 
   return {

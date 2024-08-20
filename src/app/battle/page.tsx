@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { useQuery } from 'react-query';
 
@@ -15,6 +15,7 @@ const BattlePage: React.FC = () => {
   const [aiTeam, setAiTeam] = useState<PokemonDetails[]>([]);
   const [isBattleStarted, setIsBattleStarted] = useState(false);
   const [isTeamSelected, setIsTeamSelected] = useState(false);
+  const [battleKey, setBattleKey] = useState(0);
 
   const { data: allPokemon } = useQuery('allPokemon', async () => {
     const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
@@ -45,6 +46,14 @@ const BattlePage: React.FC = () => {
     setIsBattleStarted(true);
   };
 
+  const handleReset = useCallback(() => {
+    setIsBattleStarted(false);
+    setIsTeamSelected(false);
+    setUserTeam([]);
+    setAiTeam([]);
+    setBattleKey((prevKey) => prevKey + 1);
+  }, []);
+
   if (!isTeamSelected) {
     return <TeamSelection onTeamSelected={handleTeamSelected} />;
   }
@@ -66,7 +75,12 @@ const BattlePage: React.FC = () => {
       <h1 className="text-4xl font-bold mb-6 text-center">
         Pokémon Battle Simulator
       </h1>
-      <BattleSystem userTeam={userTeam} aiTeam={aiTeam} />
+      <BattleSystem
+        key={battleKey}
+        userTeam={userTeam}
+        aiTeam={aiTeam}
+        onReset={handleReset}
+      />
     </div>
   );
 };

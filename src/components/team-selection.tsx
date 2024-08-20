@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useQuery } from 'react-query';
 
@@ -20,7 +19,6 @@ interface TeamSelectionProps {
 }
 
 const TeamSelection: React.FC<TeamSelectionProps> = ({ onTeamSelected }) => {
-  const { theme } = useTheme();
   const [selectedTeam, setSelectedTeam] = useState<PokemonDetails[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -57,7 +55,7 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ onTeamSelected }) => {
 
   return (
     <div
-      className={`p-6 rounded-lg shadow-lg ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+      className={`p-6 rounded-lg shadow-lg dark:bg-gray-800 dark:text-white bg-white text-gray-900`}
     >
       <h2 className="text-3xl font-bold mb-6 text-center">Select Your Team</h2>
       <Input
@@ -81,11 +79,7 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ onTeamSelected }) => {
                       whileTap={{ scale: 0.95 }}
                     >
                       <Card
-                        className={`cursor-pointer transition-all duration-200 ${
-                          theme === 'dark'
-                            ? 'hover:bg-gray-700'
-                            : 'hover:bg-gray-100'
-                        }`}
+                        className={`cursor-pointer transition-all duration-200 dark:hover:bg-gray-700 hover:bg-gray-100`}
                         onClick={() => handlePokemonSelect(pokemon.name)}
                       >
                         <CardContent className="p-2 text-center">
@@ -122,9 +116,7 @@ const TeamSelection: React.FC<TeamSelectionProps> = ({ onTeamSelected }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className={`flex items-center justify-between mb-4 p-2 rounded-lg ${
-                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
-                  }`}
+                  className={`flex items-center justify-between mb-4 p-2 rounded-lg dark:bg-gray-700 bg-gray-100`}
                 >
                   <div className="flex items-center">
                     <Image

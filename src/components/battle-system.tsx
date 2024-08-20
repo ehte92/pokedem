@@ -2,6 +2,7 @@ import React from 'react';
 
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { useBattleLogic } from '@/hooks/use-battle-logic';
 import { estimateLevel, getMaxHP } from '@/lib/pokemon-utils';
@@ -15,9 +16,16 @@ import { Card, CardContent } from './ui/card';
 interface BattleSystemProps {
   userTeam: PokemonDetails[];
   aiTeam: PokemonDetails[];
+  onReset: () => void;
 }
 
-const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
+const BattleSystem: React.FC<BattleSystemProps> = ({
+  userTeam,
+  aiTeam,
+  onReset,
+}) => {
+  const router = useRouter();
+
   const {
     userActivePokemon,
     aiActivePokemon,
@@ -57,18 +65,18 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
 
   const renderPokemonInfo = (pokemon: PokemonBattleState, isUser: boolean) => (
     <div
-      className={`bg-white shadow-md rounded-lg p-3 ${isUser ? 'self-end' : 'self-start'}`}
+      className={`shadow-md rounded-lg p-3 ${isUser ? 'self-end' : 'self-start'} dark:bg-gray-800 bg-white`}
     >
       <div className="flex justify-between items-center">
         <span className="font-bold text-lg capitalize">{pokemon.name}</span>
-        <span className="text-sm text-gray-600">
+        <span className="text-sm dark:text-gray-400 text-gray-600">
           Lv{estimateLevel(pokemon)}
         </span>
       </div>
       {renderHealthBar(pokemon)}
       <div className="flex justify-between items-center mt-1">
-        <span className="text-sm text-gray-600">HP</span>
-        <span className="text-sm text-gray-600">
+        <span className="text-sm dark:text-gray-400 text-gray-600">HP</span>
+        <span className="text-sm dark:text-gray-400 text-gray-600">
           {pokemon.currentHP}/{getMaxHP(pokemon)}
         </span>
       </div>
@@ -179,7 +187,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
   );
 
   const renderBattleLog = () => (
-    <div className="mt-6 bg-white shadow-lg rounded-lg p-4 h-40 overflow-y-auto">
+    <div className="mt-6 shadow-lg rounded-lg p-4 h-40 overflow-y-auto dark:bg-gray-800 bg-white">
       <h4 className="font-bold mb-2">Battle Log:</h4>
       <AnimatePresence>
         {battleLog.slice(-5).map((log, index) => (
@@ -189,7 +197,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="mb-1 text-sm text-gray-700"
+            className="mb-1 text-sm dark:text-gray-400 text-gray-600"
           >
             {log}
           </motion.p>
@@ -197,6 +205,34 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
       </AnimatePresence>
     </div>
   );
+
+  const handleNavigateHome = () => {
+    router.push('/');
+  };
+
+  const renderBattleResult = () => {
+    const resultMessage = battleLog[battleLog.length - 1];
+    const isVictory = resultMessage.includes('You won the battle!');
+
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardContent className="text-center p-6">
+          <h2 className="text-3xl font-bold mb-4">
+            {isVictory ? 'Victory!' : 'Defeat'}
+          </h2>
+          <p className="text-xl mb-6">{resultMessage}</p>
+          <div className="flex justify-center space-x-4">
+            <Button onClick={onReset} className="px-6 py-3 text-lg">
+              Start New Battle
+            </Button>
+            <Button onClick={handleNavigateHome} className="px-6 py-3 text-lg">
+              Return to Home
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   if (battleState === 'initializing') {
     return (
@@ -211,23 +247,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({ userTeam, aiTeam }) => {
   }
 
   if (battleState === 'ended') {
-    return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardContent>
-          <p className="text-center font-bold text-xl">
-            {battleLog[battleLog.length - 1]}
-          </p>
-          <Button
-            onClick={() => {
-              // Reset battle or navigate to a new page
-            }}
-            className="mt-4 mx-auto block"
-          >
-            Return to Main Menu
-          </Button>
-        </CardContent>
-      </Card>
-    );
+    return renderBattleResult();
   }
 
   if (!userActivePokemon || !aiActivePokemon) {
