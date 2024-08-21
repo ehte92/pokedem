@@ -86,7 +86,11 @@
   }
 
   .spotlight-carousel-container {
-    @apply relative overflow-visible py-24;
+    @apply relative overflow-hidden py-24;
+  }
+
+  .spotlight-carousel {
+    @apply overflow-visible;
   }
 
   .spotlight-carousel .slick-list {
@@ -98,7 +102,7 @@
   }
 
   .spotlight-carousel .slick-center {
-    @apply scale-110 opacity-100 z-10;
+    @apply scale-100 opacity-100 z-10;
   }
 
   .spotlight-carousel .slick-center .spotlight-card {
@@ -151,6 +155,16 @@
 
   .spotlight-card {
     @apply bg-gradient-to-b from-red-500 to-red-600 dark:from-red-700 dark:to-red-800;
+  }
+
+  .spotlight-carousel .slick-slide > div {
+    @apply px-2;
+  }
+
+  /* Hide overflowing slides */
+  .spotlight-carousel .slick-slide:not(.slick-active) {
+    @apply pointer-events-none;
+    visibility: hidden;
   }
 
   .opponent-pokemon {
