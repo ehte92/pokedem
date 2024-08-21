@@ -152,4 +152,24 @@
   .spotlight-card {
     @apply bg-gradient-to-b from-red-500 to-red-600 dark:from-red-700 dark:to-red-800;
   }
+
+  .opponent-pokemon {
+    transform: translateY(-10px);
+    filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.2));
+  }
+
+  .opponent-sprite {
+    transform-origin: bottom;
+    animation: hover 3s ease-in-out infinite;
+  }
+
+  @keyframes hover {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
 }

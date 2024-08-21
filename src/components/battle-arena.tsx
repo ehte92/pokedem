@@ -58,13 +58,14 @@ const BattleArena: React.FC<BattleArenaProps> = ({
             ? { x: [0, 10, -10, 10, 0], transition: { duration: 0.5 } }
             : {}
         }
+        className={isUser ? '' : 'opponent-pokemon'}
       >
         <Image
           src={imageUrl}
           alt={pokemon.name}
           width={isUser ? 200 : 180}
           height={isUser ? 200 : 180}
-          className="drop-shadow-lg pixelated"
+          className={`drop-shadow-lg pixelated ${isUser ? '' : 'opponent-sprite'}`}
         />
       </motion.div>
     );
@@ -95,6 +96,26 @@ const BattleArena: React.FC<BattleArenaProps> = ({
       <div className="absolute top-1/4 left-1/4 w-8 h-8 bg-white rounded-full opacity-20 animate-ping" />
       <div className="absolute bottom-1/3 right-1/3 w-6 h-6 bg-yellow-300 rounded-full opacity-30 animate-pulse" />
       <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-blue-400 rounded-full opacity-25 animate-bounce" />
+
+      <style jsx>{`
+        .opponent-pokemon {
+          transform: translateY(-10px);
+          filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.2));
+        }
+        .opponent-sprite {
+          transform-origin: bottom;
+          animation: hover 3s ease-in-out infinite;
+        }
+        @keyframes hover {
+          0%,
+          100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
+      `}</style>
     </div>
   );
 };
