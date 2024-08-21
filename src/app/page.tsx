@@ -130,9 +130,9 @@ const Home: React.FC = () => {
                 <Button
                   variant="link"
                   asChild
-                  className="w-full sm:w-auto justify-center sm:justify-start"
+                  className="w-full sm:w-auto justify-center sm:justify-start text-blue-500 hover:underline inline-flex items-center text-sm sm:text-base"
                 >
-                  <Link href="/pokedex" className="text-blue-500">
+                  <Link href="/pokedex">
                     Open Pokédex <ArrowRight className="ml-1 w-4 h-4" />
                   </Link>
                 </Button>
@@ -150,12 +150,15 @@ const Home: React.FC = () => {
                   Create your dream Pokémon team and analyze its strengths and
                   weaknesses.
                 </p>
-                <Link
-                  href="/team-builder"
-                  className="text-green-500 hover:underline inline-flex items-center text-sm sm:text-base"
+                <Button
+                  variant="link"
+                  asChild
+                  className="w-full sm:w-auto justify-center sm:justify-start text-green-500 hover:underline inline-flex items-center text-sm sm:text-base"
                 >
-                  Build Your Team <ArrowRight className="ml-1 w-4 h-4" />
-                </Link>
+                  <Link href="/team-builder">
+                    Build Your Team <ArrowRight className="ml-1 w-4 h-4" />
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -170,12 +173,15 @@ const Home: React.FC = () => {
                   Test your skills in thrilling Pokémon battles against AI
                   opponents.
                 </p>
-                <Link
-                  href="/battle"
-                  className="text-red-500 hover:underline inline-flex items-center text-sm sm:text-base"
+                <Button
+                  variant="link"
+                  asChild
+                  className="w-full sm:w-auto justify-center sm:justify-start text-red-500 hover:underline inline-flex items-center text-sm sm:text-base"
                 >
-                  Start a Battle <ArrowRight className="ml-1 w-4 h-4" />
-                </Link>
+                  <Link href="/battle">
+                    Start a Battle <ArrowRight className="ml-1 w-4 h-4" />
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -190,12 +196,16 @@ const Home: React.FC = () => {
                   Quickly determine type advantages and disadvantages for
                   strategic battling.
                 </p>
-                <Link
-                  href="/type-calculator"
-                  className="text-yellow-500 hover:underline inline-flex items-center text-sm sm:text-base"
+                <Button
+                  variant="link"
+                  asChild
+                  className="w-full sm:w-auto justify-center sm:justify-start text-yellow-500 hover:underline inline-flex items-center text-sm sm:text-base"
+                  disabled
                 >
-                  Calculate Types <ArrowRight className="ml-1 w-4 h-4" />
-                </Link>
+                  <Link href="/type-calculator">
+                    Calculate Types <ArrowRight className="ml-1 w-4 h-4" />
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
