@@ -113,30 +113,6 @@ export const useBattleLogic = (
     }
   }, [turnOrder, userMove, aiMove]);
 
-  const executeTurn = async () => {
-    for (const actor of turnOrder) {
-      if (actor === 'user' && userActivePokemon && aiActivePokemon) {
-        await handleTurn(userActivePokemon, aiActivePokemon, userMove!);
-      } else if (actor === 'ai' && aiActivePokemon && userActivePokemon) {
-        await handleTurn(aiActivePokemon, userActivePokemon, aiMove!);
-      }
-
-      if (!userActivePokemon || !aiActivePokemon) {
-        break;
-      }
-    }
-
-    setUserMove(null);
-    setAiMove(null);
-    setTurnOrder([]);
-
-    if (userActivePokemon && aiActivePokemon) {
-      setIsSwitching(false);
-    } else {
-      handleBattleEnd();
-    }
-  };
-
   const handleStatusEffects = (pokemon: PokemonBattleState): string[] => {
     const effects: string[] = [];
     switch (pokemon.status) {
@@ -309,6 +285,23 @@ export const useBattleLogic = (
     return effects;
   };
 
+  const handleBattleEnd = () => {
+    setBattleState('ended');
+    const userWon = aiTeamState.every((pokemon) => pokemon.currentHP === 0);
+    const aiWon = userTeamState.every((pokemon) => pokemon.currentHP === 0);
+
+    if (userWon) {
+      setBattleLog((prev) => [...prev, 'Congratulations! You won the battle!']);
+    } else if (aiWon) {
+      setBattleLog((prev) => [
+        ...prev,
+        'You lost the battle. Better luck next time!',
+      ]);
+    } else {
+      setBattleLog((prev) => [...prev, 'The battle has ended.']);
+    }
+  };
+
   const handlePokemonFainted = async (
     isUserPokemon: boolean
   ): Promise<string> => {
@@ -321,7 +314,7 @@ export const useBattleLogic = (
         return `${userActivePokemon?.name} fainted! Go, ${nextPokemon.name}!`;
       } else {
         setUserActivePokemon(null);
-        setBattleState('ended');
+        handleBattleEnd();
         return 'All your Pokémon have fainted. You lost the battle!';
       }
     } else {
@@ -334,15 +327,46 @@ export const useBattleLogic = (
         return `Opponent's ${aiActivePokemon?.name} fainted! They sent out ${nextPokemon.name}!`;
       } else {
         setAiActivePokemon(null);
-        setBattleState('ended');
+        handleBattleEnd();
         return "All opponent's Pokémon have fainted. You won the battle!";
       }
     }
   };
 
-  const handleBattleEnd = () => {
-    setBattleState('ended');
-    setBattleLog((prev) => [...prev, 'The battle has ended.']);
+  const executeTurn = async () => {
+    for (const actor of turnOrder) {
+      if (actor === 'user' && userActivePokemon && aiActivePokemon) {
+        if (userActivePokemon.currentHP > 0) {
+          await handleTurn(userActivePokemon, aiActivePokemon, userMove!);
+        }
+      } else if (actor === 'ai' && aiActivePokemon && userActivePokemon) {
+        if (aiActivePokemon.currentHP > 0) {
+          await handleTurn(aiActivePokemon, userActivePokemon, aiMove!);
+        }
+      }
+
+      // Check for fainted Pokémon after each action
+      if (userActivePokemon && userActivePokemon.currentHP <= 0) {
+        const faintedMessage = await handlePokemonFainted(true);
+        setBattleLog((prev) => [...prev, faintedMessage]);
+      }
+      if (aiActivePokemon && aiActivePokemon.currentHP <= 0) {
+        const faintedMessage = await handlePokemonFainted(false);
+        setBattleLog((prev) => [...prev, faintedMessage]);
+      }
+
+      if (battleState === 'ended') {
+        break;
+      }
+    }
+
+    setUserMove(null);
+    setAiMove(null);
+    setTurnOrder([]);
+
+    if (battleState !== 'ended') {
+      setIsSwitching(false);
+    }
   };
 
   const handleTurn = async (
@@ -389,37 +413,6 @@ export const useBattleLogic = (
 
       // Handle post-move status effects
       turnLog.push(...handleStatusEffects(defender));
-
-      if (defender.currentHP === 0) {
-        const faintedMessage = await handlePokemonFainted(
-          defender === userActivePokemon
-        );
-        turnLog.push(faintedMessage);
-
-        // Update the team state
-        if (defender === userActivePokemon) {
-          setUserTeamState((prevState) =>
-            prevState.map((p) =>
-              p.name === defender.name ? { ...p, currentHP: 0 } : p
-            )
-          );
-        } else {
-          setAiTeamState((prevState) =>
-            prevState.map((p) =>
-              p.name === defender.name ? { ...p, currentHP: 0 } : p
-            )
-          );
-        }
-
-        // Immediately update the active Pokémon state
-        if (defender === userActivePokemon) {
-          setUserActivePokemon(
-            userTeamState.find((p) => p.currentHP > 0) || null
-          );
-        } else {
-          setAiActivePokemon(aiTeamState.find((p) => p.currentHP > 0) || null);
-        }
-      }
 
       setBattleLog((prev) => [...prev, ...turnLog]);
     } catch (error) {

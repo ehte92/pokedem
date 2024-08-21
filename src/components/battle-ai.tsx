@@ -55,19 +55,21 @@ export class BattleAI {
     score *= (move.accuracy || 100) / 100;
 
     // Consider status effects
-    if (move.meta.ailment.name !== 'none') {
+    if (move.meta && move.meta.ailment && move.meta.ailment.name !== 'none') {
       score += 20; // Bonus for status-inducing moves
     }
 
     // Consider stat changes
-    move.stat_changes.forEach((change) => {
-      score += change.change * 10;
-    });
+    if (move.stat_changes) {
+      move.stat_changes.forEach((change) => {
+        score += change.change * 10;
+      });
+    }
 
     // Consider current HP
     const aiHpPercentage =
       this.aiPokemon.currentHP / this.getMaxHP(this.aiPokemon);
-    if (aiHpPercentage < 0.3 && move.meta.healing > 0) {
+    if (aiHpPercentage < 0.3 && move.meta && move.meta.healing > 0) {
       score += 50; // Prioritize healing when low on HP
     }
 

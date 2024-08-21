@@ -1,15 +1,15 @@
 import React from 'react';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useQueries, useQuery } from 'react-query';
+import { useQueries } from 'react-query';
 
 import { useBattleLogic } from '@/hooks/use-battle-logic';
 import { fetchMoveDetails } from '@/lib/api';
-import { estimateLevel, getMaxHP, getTypeColor } from '@/lib/pokemon-utils';
-import { MoveDetails, PokemonBattleState, PokemonDetails } from '@/lib/types';
+import { getTypeColor } from '@/lib/pokemon-utils';
+import { MoveDetails, PokemonDetails } from '@/lib/types';
 
+import BattleArena from './battle-arena';
 import PokemonSwitcher from './pokemin-switcher';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -52,52 +52,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
     })) ?? []
   );
 
-  const renderHealthBar = (pokemon: PokemonBattleState) => {
-    const hpPercentage = (pokemon.currentHP / getMaxHP(pokemon)) * 100;
-    const barColor =
-      hpPercentage > 50
-        ? 'bg-green-500'
-        : hpPercentage > 20
-          ? 'bg-yellow-500'
-          : 'bg-red-500';
-
-    return (
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-        <motion.div
-          className={`h-2.5 rounded-full ${barColor}`}
-          initial={{ width: '100%' }}
-          animate={{ width: `${hpPercentage}%` }}
-          transition={{ duration: 0.5 }}
-        />
-      </div>
-    );
-  };
-
-  const renderPokemonInfo = (pokemon: PokemonBattleState, isUser: boolean) => (
-    <div
-      className={`shadow-md rounded-lg p-3 ${isUser ? 'self-end' : 'self-start'} dark:bg-gray-800 bg-white`}
-    >
-      <div className="flex justify-between items-center">
-        <span className="font-bold text-lg capitalize">{pokemon.name}</span>
-        <span className="text-sm dark:text-gray-400 text-gray-600">
-          Lv{estimateLevel(pokemon)}
-        </span>
-      </div>
-      {renderHealthBar(pokemon)}
-      <div className="flex justify-between items-center mt-1">
-        <span className="text-sm dark:text-gray-400 text-gray-600">HP</span>
-        <span className="text-sm dark:text-gray-400 text-gray-600">
-          {pokemon.currentHP}/{getMaxHP(pokemon)}
-        </span>
-      </div>
-      {pokemon.status && (
-        <Badge variant="outline" className="mt-2">
-          {pokemon.status}
-        </Badge>
-      )}
-    </div>
-  );
-
   const renderTeamStatus = () => (
     <div className="flex justify-between mb-4">
       <div>
@@ -110,53 +64,6 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
       </div>
     </div>
   );
-
-  const renderPokemonImage = (pokemon: PokemonBattleState, isUser: boolean) => {
-    const imageUrl = isUser
-      ? pokemon.sprites.back_default || pokemon.sprites.front_default
-      : pokemon.sprites.front_default;
-
-    return (
-      <motion.div
-        animate={
-          attackAnimation === (isUser ? 'user' : 'ai')
-            ? { x: [0, 10, -10, 10, 0], transition: { duration: 0.5 } }
-            : {}
-        }
-      >
-        <Image
-          src={imageUrl}
-          alt={pokemon.name}
-          width={isUser ? 200 : 180}
-          height={isUser ? 200 : 180}
-          className="drop-shadow-lg"
-        />
-      </motion.div>
-    );
-  };
-
-  const renderBattleArena = () => {
-    if (!userActivePokemon || !aiActivePokemon) {
-      return <div>Loading battle arena...</div>;
-    }
-
-    return (
-      <div className="relative h-80 bg-gradient-to-b from-sky-400 to-sky-200 rounded-lg mb-6">
-        <div className="absolute top-4 left-4 z-10">
-          {renderPokemonInfo(aiActivePokemon, false)}
-        </div>
-        <div className="absolute top-4 right-4 z-20">
-          {renderPokemonImage(aiActivePokemon, false)}
-        </div>
-        <div className="absolute bottom-4 right-4 z-10">
-          {renderPokemonInfo(userActivePokemon, true)}
-        </div>
-        <div className="absolute bottom-4 left-4 z-20">
-          {renderPokemonImage(userActivePokemon, true)}
-        </div>
-      </div>
-    );
-  };
 
   const renderMoveSelection = () => {
     if (!userActivePokemon) return null;
@@ -219,7 +126,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
   );
 
   const renderBattleLog = () => (
-    <div className="mt-6 shadow-lg rounded-lg p-4 h-40 overflow-y-auto dark:bg-gray-800 bg-white">
+    <div className="mt-6 shadow-lg rounded-lg p-4 h-40 overflow-y-auto bg-white dark:bg-gray-800">
       <h4 className="font-bold mb-2">Battle Log:</h4>
       <AnimatePresence>
         {battleLog.slice(-5).map((log, index) => (
@@ -229,7 +136,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="mb-1 text-sm dark:text-gray-400 text-gray-600"
+            className="mb-1 text-sm text-gray-600 dark:text-gray-400"
           >
             {log}
           </motion.p>
@@ -296,11 +203,15 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
     <Card className="w-full max-w-4xl mx-auto overflow-hidden">
       <CardContent className="p-6">
         {renderTeamStatus()}
-        {renderBattleArena()}
+        <BattleArena
+          userActivePokemon={userActivePokemon}
+          aiActivePokemon={aiActivePokemon}
+          attackAnimation={attackAnimation}
+        />
         {isSwitching ? (
           <PokemonSwitcher
             team={userTeamState.filter((p) => p.currentHP > 0)}
-            activePokemon={userActivePokemon!}
+            activePokemon={userActivePokemon}
             onSwitch={handleSwitch}
           />
         ) : (
