@@ -82,67 +82,6 @@ export const calculateTypeEffectiveness = (
   );
 };
 
-export const calculateDamage = (
-  attacker: PokemonBattleState,
-  defender: PokemonBattleState,
-  moveDetails: MoveDetails
-): number => {
-  const attackStat =
-    attacker.stats.find(
-      (stat) =>
-        stat.stat.name ===
-        (moveDetails.damage_class.name === 'physical'
-          ? 'attack'
-          : 'special-attack')
-    )?.base_stat || 50;
-  const defenseStat =
-    defender.stats.find(
-      (stat) =>
-        stat.stat.name ===
-        (moveDetails.damage_class.name === 'physical'
-          ? 'defense'
-          : 'special-defense')
-    )?.base_stat || 50;
-  const effectiveness = calculateTypeEffectiveness(
-    moveDetails.type.name,
-    defender.types[0].type.name
-  );
-
-  const power = moveDetails.power || 50;
-  const stab = attacker.types.some(
-    (type) => type.type.name === moveDetails.type.name
-  )
-    ? 1.5
-    : 1;
-  const random = Math.random() * (1 - 0.85) + 0.85;
-
-  const level = estimateLevel(attacker);
-  let damage = Math.floor(
-    ((((2 * level) / 5 + 2) * power * (attackStat / defenseStat)) / 50 + 2) *
-      effectiveness *
-      stab *
-      random
-  );
-
-  // Apply status effect modifications
-  if (
-    attacker.status === 'burn' &&
-    moveDetails.damage_class.name === 'physical'
-  ) {
-    damage = Math.floor(damage / 2);
-  }
-
-  // Apply ability effects
-  if (
-    attacker.ability.name.toLowerCase() === 'guts' &&
-    attacker.status !== null
-  ) {
-    damage = Math.floor(damage * 1.5);
-  }
-
-  return Math.max(1, Math.min(damage, defender.currentHP));
-};
-
 export const getStatModifier = (stage: number): number => {
   const modifiers = [
     0.25, 0.28, 0.33, 0.4, 0.5, 0.66, 1, 1.5, 2, 2.5, 3, 3.5, 4,
@@ -278,29 +217,139 @@ export const selectRandomMove = (
   return availableMoves[randomIndex];
 };
 
-export const useMove = (
-  pokemon: PokemonBattleState,
+const CRITICAL_HIT_STAGES = [24, 8, 2, 1];
+
+export const getCriticalHitStage = (pokemon: PokemonBattleState): number => {
+  // Check for moves or abilities that affect critical hit ratio
+  const hasHighCritRatio = pokemon.moves.some((move) =>
+    move.move.name.toLowerCase().includes('focus energy')
+  );
+  const hasSniper = pokemon.ability.name.toLowerCase() === 'sniper';
+
+  if (hasSniper) return 1;
+  if (hasHighCritRatio) return 2;
+  return 0;
+};
+
+export const isCriticalHit = (critStage: number): boolean => {
+  const threshold = CRITICAL_HIT_STAGES[critStage] || CRITICAL_HIT_STAGES[0];
+  return Math.floor(Math.random() * threshold) === 0;
+};
+
+export const calculateDamage = (
+  attacker: PokemonBattleState,
+  defender: PokemonBattleState,
+  moveDetails: MoveDetails
+): [number, boolean] => {
+  const attackStat =
+    attacker.stats.find(
+      (stat) =>
+        stat.stat.name ===
+        (moveDetails.damage_class.name === 'physical'
+          ? 'attack'
+          : 'special-attack')
+    )?.base_stat || 50;
+  const defenseStat =
+    defender.stats.find(
+      (stat) =>
+        stat.stat.name ===
+        (moveDetails.damage_class.name === 'physical'
+          ? 'defense'
+          : 'special-defense')
+    )?.base_stat || 50;
+  const effectiveness = calculateTypeEffectiveness(
+    moveDetails.type.name,
+    defender.types[0].type.name
+  );
+
+  const power = moveDetails.power || 50;
+  const stab = attacker.types.some(
+    (type) => type.type.name === moveDetails.type.name
+  )
+    ? 1.5
+    : 1;
+  const random = Math.random() * (1 - 0.85) + 0.85;
+
+  const level = estimateLevel(attacker);
+
+  // Calculate critical hit
+  const critStage = getCriticalHitStage(attacker);
+  const isCrit = isCriticalHit(critStage);
+  const critMultiplier = isCrit ? 1.5 : 1;
+
+  let damage = Math.floor(
+    ((((2 * level) / 5 + 2) * power * (attackStat / defenseStat)) / 50 + 2) *
+      effectiveness *
+      stab *
+      random *
+      critMultiplier
+  );
+
+  // Apply status effect modifications
+  if (
+    attacker.status === 'burn' &&
+    moveDetails.damage_class.name === 'physical'
+  ) {
+    damage = Math.floor(damage / 2);
+  }
+
+  // Apply ability effects
+  if (
+    attacker.ability.name.toLowerCase() === 'guts' &&
+    attacker.status !== null
+  ) {
+    damage = Math.floor(damage * 1.5);
+  }
+
+  if (isCrit && attacker.ability.name.toLowerCase() === 'sniper') {
+    damage = Math.floor(damage * 1.5);
+  }
+
+  return [Math.max(1, Math.min(damage, defender.currentHP)), isCrit];
+};
+
+export const useMove = async (
+  attacker: PokemonBattleState,
+  defender: PokemonBattleState,
   moveIndex: number
-): [PokemonBattleState, string] => {
-  if (moveIndex < 0 || moveIndex >= pokemon.moves.length) {
-    return [pokemon, 'Invalid move index'];
+): Promise<[PokemonBattleState, PokemonBattleState, string[]]> => {
+  if (moveIndex < 0 || moveIndex >= attacker.moves.length) {
+    return [attacker, defender, ['Invalid move index']];
   }
 
-  const move = pokemon.moves[moveIndex];
+  const move = attacker.moves[moveIndex];
   if (move.pp <= 0) {
-    return [pokemon, `${move.move.name} has no PP left!`];
+    return [attacker, defender, [`${move.move.name} has no PP left!`]];
   }
 
-  const updatedMoves = [...pokemon.moves];
+  const updatedMoves = [...attacker.moves];
   updatedMoves[moveIndex] = {
     ...move,
     pp: move.pp - 1,
   };
 
-  return [
-    { ...pokemon, moves: updatedMoves },
-    `${pokemon.name} used ${move.move.name}!`,
-  ];
+  const updatedAttacker = { ...attacker, moves: updatedMoves };
+
+  // Fetch move details and calculate damage
+  const moveDetails = await fetchMoveDetails(move.move.name);
+  const [damage, isCrit] = calculateDamage(
+    updatedAttacker,
+    defender,
+    moveDetails
+  );
+
+  const updatedDefender = {
+    ...defender,
+    currentHP: Math.max(0, defender.currentHP - damage),
+  };
+
+  const messages = [
+    `${attacker.name} used ${move.move.name}!`,
+    isCrit ? 'A critical hit!' : '',
+    `It dealt ${damage} damage to ${defender.name}!`,
+  ].filter(Boolean);
+
+  return [updatedAttacker, updatedDefender, messages];
 };
 
 export const restorePP = (

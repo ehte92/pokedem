@@ -4,6 +4,7 @@ import { BattleAI } from '@/components/battle-ai';
 import { fetchMoveDetails } from '@/lib/api';
 import {
   calculateDamage,
+  doesMoveHit,
   getMaxHP,
   initializePokemon,
 } from '@/lib/pokemon-utils';
@@ -392,17 +393,24 @@ export const useBattleLogic = (
       // Check if the move hits
       if (
         moveDetails.accuracy !== null &&
-        Math.random() > moveDetails.accuracy / 100
+        !doesMoveHit(attacker, defender, moveDetails.accuracy)
       ) {
         turnLog.push(`${attacker.name}'s ${moveName} missed!`);
       } else {
         // Calculate and apply damage
         if (moveDetails.power !== null) {
-          const damage = calculateDamage(attacker, defender, moveDetails);
+          const [damage, isCritical] = calculateDamage(
+            attacker,
+            defender,
+            moveDetails
+          );
           defender.currentHP = Math.max(0, defender.currentHP - damage);
           turnLog.push(
             `${attacker.name} used ${moveName} and dealt ${damage} damage to ${defender.name}!`
           );
+          if (isCritical) {
+            turnLog.push('A critical hit!');
+          }
         } else {
           turnLog.push(`${attacker.name} used ${moveName}!`);
         }
