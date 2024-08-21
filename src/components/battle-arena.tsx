@@ -43,6 +43,11 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           {pokemon.stats.find((stat) => stat.stat.name === 'hp')?.base_stat}
         </span>
       </div>
+      {pokemon.status && (
+        <span className="text-sm text-red-500 mt-1 capitalize">
+          {pokemon.status}
+        </span>
+      )}
     </div>
   );
 
