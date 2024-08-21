@@ -3,10 +3,12 @@ import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useQueries, useQuery } from 'react-query';
 
 import { useBattleLogic } from '@/hooks/use-battle-logic';
-import { estimateLevel, getMaxHP } from '@/lib/pokemon-utils';
-import { PokemonBattleState, PokemonDetails } from '@/lib/types';
+import { fetchMoveDetails } from '@/lib/api';
+import { estimateLevel, getMaxHP, getTypeColor } from '@/lib/pokemon-utils';
+import { MoveDetails, PokemonBattleState, PokemonDetails } from '@/lib/types';
 
 import PokemonSwitcher from './pokemin-switcher';
 import { Badge } from './ui/badge';
@@ -41,6 +43,14 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
     battleState,
     handleBattleEnd,
   } = useBattleLogic(userTeam, aiTeam);
+
+  const moveQueries = useQueries(
+    userActivePokemon?.moves.slice(0, 4).map((move) => ({
+      queryKey: ['moveDetails', move.move.name],
+      queryFn: () => fetchMoveDetails(move.move.name),
+      enabled: !!userActivePokemon,
+    })) ?? []
+  );
 
   const renderHealthBar = (pokemon: PokemonBattleState) => {
     const hpPercentage = (pokemon.currentHP / getMaxHP(pokemon)) * 100;
@@ -153,16 +163,38 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
 
     return (
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {userActivePokemon.moves.slice(0, 4).map((move) => (
-          <Button
-            key={move.move.name}
-            onClick={() => handleUserMove(move.move.name)}
-            disabled={!!userMove || battleState !== 'active'}
-            className="capitalize bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-          >
-            {move.move.name} (PP: {move.pp}/{move.maxPp})
-          </Button>
-        ))}
+        {userActivePokemon.moves.slice(0, 4).map((move, index) => {
+          const moveDetails = moveQueries[index].data as
+            | MoveDetails
+            | undefined;
+
+          return (
+            <Button
+              key={move.move.name}
+              onClick={() => handleUserMove(move.move.name)}
+              disabled={!!userMove || battleState !== 'active'}
+              className="capitalize bg-blue-500 text-white hover:bg-blue-600 transition-colors flex flex-col items-start p-2 h-auto"
+            >
+              <span>{move.move.name}</span>
+              <div className="flex justify-between w-full mt-1">
+                <span className="text-xs">
+                  PP: {move.pp}/{move.maxPp}
+                </span>
+                {moveDetails && (
+                  <Badge
+                    style={{
+                      backgroundColor: getTypeColor(moveDetails.type.name),
+                      color: 'white',
+                    }}
+                    className="text-xs"
+                  >
+                    {moveDetails.type.name}
+                  </Badge>
+                )}
+              </div>
+            </Button>
+          );
+        })}
       </div>
     );
   };
@@ -268,7 +300,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
         {isSwitching ? (
           <PokemonSwitcher
             team={userTeamState.filter((p) => p.currentHP > 0)}
-            activePokemon={userActivePokemon}
+            activePokemon={userActivePokemon!}
             onSwitch={handleSwitch}
           />
         ) : (
