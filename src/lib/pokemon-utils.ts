@@ -389,10 +389,15 @@ export const calculateAccuracy = (
 export const doesMoveHit = (
   attacker: PokemonBattleState,
   defender: PokemonBattleState,
-  moveAccuracy: number
+  moveAccuracy: number | null
 ): boolean => {
   if (moveAccuracy === null) return true; // Moves with null accuracy always hit
-  const adjustedAccuracy = calculateAccuracy(attacker, defender, moveAccuracy);
+
+  const accuracyStage = attacker.statStages.accuracy || 0;
+  const evasionStage = defender.statStages.evasion || 0;
+  const stageModifier = getStatModifier(accuracyStage - evasionStage);
+  const adjustedAccuracy = moveAccuracy * stageModifier;
+
   return Math.random() * 100 < adjustedAccuracy;
 };
 
