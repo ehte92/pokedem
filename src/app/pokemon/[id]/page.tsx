@@ -275,28 +275,34 @@ const PokemonDetailPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <Link
           href="/pokedex"
-          className="inline-flex items-center text-blue-500 hover:text-blue-600 transition-colors"
+          className="inline-flex items-center text-blue-500 hover:text-blue-600 transition-colors mb-4 sm:mb-0"
         >
           <ArrowLeftCircle className="mr-2" />
           Back to Pokédex
         </Link>
-        <div className="flex space-x-4">
+        <div className="flex space-x-2 sm:space-x-4">
           {prevPokemon && (
             <Link href={`/pokemon/${prevPokemon.name}`}>
-              <Button variant="outline" className="flex items-center">
-                <ArrowLeft className="mr-2" />
+              <Button
+                variant="outline"
+                className="flex items-center text-sm sm:text-base"
+              >
+                <ArrowLeft className="mr-1 sm:mr-2 w-4 h-4 sm:w-5 sm:h-5" />
                 {prevPokemon.name}
               </Button>
             </Link>
           )}
           {nextPokemon && (
             <Link href={`/pokemon/${nextPokemon.name}`}>
-              <Button variant="outline" className="flex items-center">
+              <Button
+                variant="outline"
+                className="flex items-center text-sm sm:text-base"
+              >
                 {nextPokemon.name}
-                <ArrowRight className="ml-2" />
+                <ArrowRight className="ml-1 sm:ml-2 w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </Link>
           )}
@@ -306,31 +312,35 @@ const PokemonDetailPage = () => {
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
             {/* Left side - Pokemon Image and Stats */}
-            <div className="w-full md:w-1/3 bg-gray-100 dark:bg-gray-800 flex flex-col items-center p-8">
+            <div className="w-full md:w-1/3 bg-gray-100 dark:bg-gray-800 flex flex-col items-center p-4 sm:p-8">
               <Image
                 src={
                   pokemon.sprites.other['official-artwork'].front_default ||
                   pokemon.sprites.front_default
                 }
                 alt={pokemon.name}
-                width={300}
-                height={300}
-                className="object-contain mb-8"
+                width={250}
+                height={250}
+                className="object-contain mb-4 sm:mb-8"
               />
 
               {/* Stats Section */}
               <div className="w-full">
-                <h3 className="text-xl font-semibold mb-4">Stats</h3>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4">
+                  Stats
+                </h3>
                 <div className="space-y-2">
                   {pokemon.stats.map((stat) => (
                     <div key={stat.stat.name}>
                       <div className="flex justify-between">
-                        <span className="capitalize">{stat.stat.name}</span>
-                        <span>{stat.base_stat}</span>
+                        <span className="capitalize text-sm">
+                          {stat.stat.name}
+                        </span>
+                        <span className="text-sm">{stat.base_stat}</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                      <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
                         <div
-                          className="bg-blue-600 h-2.5 rounded-full"
+                          className="bg-blue-600 h-2 rounded-full"
                           style={{ width: `${(stat.base_stat / 255) * 100}%` }}
                         ></div>
                       </div>
@@ -341,21 +351,23 @@ const PokemonDetailPage = () => {
             </div>
 
             {/* Right side - Pokemon Details */}
-            <div className="w-full md:w-2/3 p-6">
+            <div className="w-full md:w-2/3 p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
-                <h1 className="text-3xl font-bold capitalize">
+                <h1 className="text-2xl sm:text-3xl font-bold capitalize">
                   {pokemon.name}
                 </h1>
-                <span className="text-2xl font-semibold text-gray-500">
+                <span className="text-xl sm:text-2xl font-semibold text-gray-500">
                   #{pokemon.id.toString().padStart(3, '0')}
                 </span>
               </div>
 
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-semibold">Description</h3>
+              <div className="mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                  <h3 className="text-lg font-semibold mb-2 sm:mb-0">
+                    Description
+                  </h3>
                   <Select value={selectedGen} onValueChange={setSelectedGen}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Select generation" />
                     </SelectTrigger>
                     <SelectContent>
@@ -373,49 +385,55 @@ const PokemonDetailPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
                   {getDescription()}
                 </p>
               </div>
 
               {/* Key Attributes Section */}
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
-                <h3 className="text-xl font-semibold mb-4">Key Attributes</h3>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+                  Key Attributes
+                </h3>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="flex items-center">
-                    <Ruler className="w-6 h-6 mr-2 text-blue-500" />
+                    <Ruler className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-blue-500" />
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Height
                       </p>
-                      <p className="font-semibold">{pokemon.height / 10} m</p>
+                      <p className="text-sm sm:text-base font-semibold">
+                        {pokemon.height / 10} m
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <Weight className="w-6 h-6 mr-2 text-green-500" />
+                    <Weight className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-green-500" />
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Weight
                       </p>
-                      <p className="font-semibold">{pokemon.weight / 10} kg</p>
+                      <p className="text-sm sm:text-base font-semibold">
+                        {pokemon.weight / 10} kg
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <Zap className="w-6 h-6 mr-2 text-yellow-500" />
+                    <Zap className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-yellow-500" />
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Main Ability
                       </p>
                       <Tooltip.Provider>
                         <Tooltip.Root>
                           <Tooltip.Trigger asChild>
-                            <p className="font-semibold capitalize cursor-help">
+                            <p className="text-sm sm:text-base font-semibold capitalize cursor-help">
                               {mainAbility?.name || 'Unknown'}
                             </p>
                           </Tooltip.Trigger>
                           <Tooltip.Portal>
                             <Tooltip.Content
-                              className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-2 rounded shadow-lg max-w-xs"
+                              className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-2 rounded shadow-lg max-w-xs text-xs sm:text-sm"
                               sideOffset={5}
                             >
                               {getAbilityDescription()}
@@ -427,30 +445,34 @@ const PokemonDetailPage = () => {
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <Star className="w-6 h-6 mr-2 text-purple-500" />
+                    <Star className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-purple-500" />
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         Base Experience
                       </p>
-                      <p className="font-semibold">{pokemon.base_experience}</p>
+                      <p className="text-sm sm:text-base font-semibold">
+                        {pokemon.base_experience}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Type Effectiveness Section */}
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
-                <h3 className="text-xl font-semibold mb-4">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
                   Type Effectiveness
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <h4 className="font-semibold mb-2">Type</h4>
+                    <h4 className="font-semibold mb-2 text-sm sm:text-base">
+                      Type
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {pokemon.types.map((type) => (
                         <Badge
                           key={type.type.name}
-                          className={`${typeColors[type.type.name]} text-white`}
+                          className={`${typeColors[type.type.name]} text-white text-xs sm:text-sm`}
                         >
                           {type.type.name}
                         </Badge>
@@ -458,12 +480,14 @@ const PokemonDetailPage = () => {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold mb-2">Weaknesses</h4>
+                    <h4 className="font-semibold mb-2 text-sm sm:text-base">
+                      Weaknesses
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {weaknesses.map((type) => (
                         <Badge
                           key={type}
-                          className={`${typeColors[type]} text-white`}
+                          className={`${typeColors[type]} text-white text-xs sm:text-sm`}
                         >
                           {type}
                         </Badge>
@@ -471,12 +495,14 @@ const PokemonDetailPage = () => {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold mb-2">Strong Against</h4>
+                    <h4 className="font-semibold mb-2 text-sm sm:text-base">
+                      Strong Against
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {strengths.map((type) => (
                         <Badge
                           key={type}
-                          className={`${typeColors[type]} text-white`}
+                          className={`${typeColors[type]} text-white text-xs sm:text-sm`}
                         >
                           {type}
                         </Badge>
@@ -492,9 +518,9 @@ const PokemonDetailPage = () => {
 
       {/* Evolution Chain */}
       {!isEvolutionLoading && evolutionChain && (
-        <Card className="overflow-hidden shadow-lg">
-          <CardContent className="p-6">
-            <h2 className="text-2xl font-semibold mb-4 text-center font-pixel text-gray-800 dark:text-gray-200">
+        <Card className="overflow-hidden shadow-lg mt-6">
+          <CardContent className="p-4 sm:p-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4 text-center font-pixel text-gray-800 dark:text-gray-200">
               Evolution Chain
             </h2>
             <EvolutionChainComponent chain={evolutionChain} />
