@@ -44,6 +44,8 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
     battleState,
     handleBattleEnd,
     statusChangeAnimation,
+    switchAnimation,
+    faintAnimation,
   } = useBattleLogic(userTeam, aiTeam);
 
   const moveQueries = useQueries(
@@ -214,6 +216,8 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
           aiActivePokemon={aiActivePokemon}
           attackAnimation={attackAnimation}
           statusChangeAnimation={statusChangeAnimation}
+          switchAnimation={switchAnimation}
+          faintAnimation={faintAnimation}
         />
         {isSwitching ? (
           <PokemonSwitcher

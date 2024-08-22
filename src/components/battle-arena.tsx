@@ -10,6 +10,8 @@ interface BattleArenaProps {
   aiActivePokemon: PokemonBattleState;
   attackAnimation: 'user' | 'ai' | null;
   statusChangeAnimation: 'user' | 'ai' | null;
+  switchAnimation: 'user' | 'ai' | null;
+  faintAnimation: 'user' | 'ai' | null;
 }
 
 const BattleArena: React.FC<BattleArenaProps> = ({
@@ -17,6 +19,8 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   aiActivePokemon,
   attackAnimation,
   statusChangeAnimation,
+  switchAnimation,
+  faintAnimation,
 }) => {
   const renderPokemonInfo = (pokemon: PokemonBattleState, isUser: boolean) => (
     <div
@@ -69,11 +73,27 @@ const BattleArena: React.FC<BattleArenaProps> = ({
 
     return (
       <motion.div
-        animate={
-          attackAnimation === (isUser ? 'user' : 'ai')
-            ? { x: [0, 10, -10, 10, 0], transition: { duration: 0.5 } }
+        key={pokemon.name}
+        initial={
+          switchAnimation === (isUser ? 'user' : 'ai')
+            ? { x: isUser ? -100 : 100, opacity: 0 }
             : {}
         }
+        animate={
+          switchAnimation === (isUser ? 'user' : 'ai')
+            ? { x: 0, opacity: 1 }
+            : attackAnimation === (isUser ? 'user' : 'ai')
+              ? { x: [0, 10, -10, 10, 0], transition: { duration: 0.5 } }
+              : faintAnimation === (isUser ? 'user' : 'ai')
+                ? { y: 50, opacity: 0 }
+                : {}
+        }
+        exit={
+          faintAnimation === (isUser ? 'user' : 'ai')
+            ? { y: 50, opacity: 0 }
+            : {}
+        }
+        transition={{ duration: 0.5 }}
         className={`absolute ${
           isUser ? 'bottom-[15%] left-[20%]' : 'top-[30%] right-[25%]'
         } transform ${isUser ? 'scale-125' : 'scale-100'}`}
@@ -108,11 +128,15 @@ const BattleArena: React.FC<BattleArenaProps> = ({
         <div className="absolute top-2 left-2 z-10 max-w-[45%]">
           {renderPokemonInfo(aiActivePokemon, false)}
         </div>
-        {renderPokemonImage(aiActivePokemon, false)}
+        <AnimatePresence>
+          {renderPokemonImage(aiActivePokemon, false)}
+        </AnimatePresence>
         <div className="absolute bottom-2 right-2 z-10 max-w-[45%]">
           {renderPokemonInfo(userActivePokemon, true)}
         </div>
-        {renderPokemonImage(userActivePokemon, true)}
+        <AnimatePresence>
+          {renderPokemonImage(userActivePokemon, true)}
+        </AnimatePresence>
       </div>
     </div>
   );

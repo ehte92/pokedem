@@ -42,6 +42,12 @@ export const useBattleLogic = (
   const [statusChangeAnimation, setStatusChangeAnimation] = useState<
     'user' | 'ai' | null
   >(null);
+  const [switchAnimation, setSwitchAnimation] = useState<'user' | 'ai' | null>(
+    null
+  );
+  const [faintAnimation, setFaintAnimation] = useState<'user' | 'ai' | null>(
+    null
+  );
 
   useEffect(() => {
     const initializeBattle = async () => {
@@ -84,10 +90,14 @@ export const useBattleLogic = (
 
   const handleSwitch = (newPokemon: PokemonBattleState) => {
     if (newPokemon.currentHP > 0 && newPokemon !== userActivePokemon) {
-      setUserActivePokemon(newPokemon);
-      setBattleLog((prev) => [...prev, `Go, ${newPokemon.name}!`]);
-      setIsSwitching(false);
-      setTurnPhase('switchPokemon');
+      setSwitchAnimation('user');
+      setTimeout(() => {
+        setUserActivePokemon(newPokemon);
+        setBattleLog((prev) => [...prev, `Go, ${newPokemon.name}!`]);
+        setIsSwitching(false);
+        setTurnPhase('switchPokemon');
+        setTimeout(() => setSwitchAnimation(null), 500);
+      }, 500);
     }
   };
 
@@ -358,32 +368,52 @@ export const useBattleLogic = (
   const handlePokemonFainted = async (
     isUserPokemon: boolean
   ): Promise<string> => {
-    if (isUserPokemon) {
-      const nextPokemon = userTeamState.find(
-        (p) => p.currentHP > 0 && p !== userActivePokemon
-      );
-      if (nextPokemon) {
-        setUserActivePokemon(nextPokemon);
-        return `${userActivePokemon?.name} fainted! Go, ${nextPokemon.name}!`;
-      } else {
-        setUserActivePokemon(null);
-        handleBattleEnd();
-        return 'All your Pokémon have fainted. You lost the battle!';
-      }
-    } else {
-      const nextPokemon = aiTeamState.find(
-        (p) => p.currentHP > 0 && p !== aiActivePokemon
-      );
-      if (nextPokemon) {
-        setAiActivePokemon(nextPokemon);
-        setBattleAI(new BattleAI(nextPokemon, userActivePokemon!, aiTeamState));
-        return `Opponent's ${aiActivePokemon?.name} fainted! They sent out ${nextPokemon.name}!`;
-      } else {
-        setAiActivePokemon(null);
-        handleBattleEnd();
-        return "All opponent's Pokémon have fainted. You won the battle!";
-      }
-    }
+    return new Promise((resolve) => {
+      setFaintAnimation(isUserPokemon ? 'user' : 'ai');
+      setTimeout(() => {
+        if (isUserPokemon) {
+          const nextPokemon = userTeamState.find(
+            (p) => p.currentHP > 0 && p !== userActivePokemon
+          );
+          if (nextPokemon) {
+            setSwitchAnimation('user');
+            setTimeout(() => {
+              setUserActivePokemon(nextPokemon);
+              setSwitchAnimation(null);
+            }, 500);
+            resolve(
+              `${userActivePokemon?.name} fainted! Go, ${nextPokemon.name}!`
+            );
+          } else {
+            setUserActivePokemon(null);
+            handleBattleEnd();
+            resolve('All your Pokémon have fainted. You lost the battle!');
+          }
+        } else {
+          const nextPokemon = aiTeamState.find(
+            (p) => p.currentHP > 0 && p !== aiActivePokemon
+          );
+          if (nextPokemon) {
+            setSwitchAnimation('ai');
+            setTimeout(() => {
+              setAiActivePokemon(nextPokemon);
+              setBattleAI(
+                new BattleAI(nextPokemon, userActivePokemon!, aiTeamState)
+              );
+              setSwitchAnimation(null);
+            }, 500);
+            resolve(
+              `Opponent's ${aiActivePokemon?.name} fainted! They sent out ${nextPokemon.name}!`
+            );
+          } else {
+            setAiActivePokemon(null);
+            handleBattleEnd();
+            resolve("All opponent's Pokémon have fainted. You won the battle!");
+          }
+        }
+        setFaintAnimation(null);
+      }, 500);
+    });
   };
 
   const handleBattleEnd = () => {
@@ -428,6 +458,8 @@ export const useBattleLogic = (
     battleState,
     handleBattleEnd,
     statusChangeAnimation,
+    switchAnimation,
+    faintAnimation,
     turnPhase,
   };
 };
