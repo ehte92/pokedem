@@ -95,8 +95,10 @@ const BattleArena: React.FC<BattleArenaProps> = ({
         }
         transition={{ duration: 0.5 }}
         className={`absolute ${
-          isUser ? 'bottom-[15%] left-[20%]' : 'top-[30%] right-[25%]'
-        } transform ${isUser ? 'scale-125' : 'scale-100'}`}
+          isUser
+            ? 'bottom-0 left-0 sm:bottom-[10%] sm:left-[15%]'
+            : 'top-[5%] right-[5%] sm:top-[20%] sm:right-[20%]'
+        } transform ${isUser ? 'scale-100 sm:scale-125' : 'scale-75 sm:scale-100'}`}
       >
         <Image
           src={imageUrl}
