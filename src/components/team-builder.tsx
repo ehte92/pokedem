@@ -25,18 +25,20 @@ const TeamBuilder: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Card>
-        <CardContent className="p-6">
-          <h2 className="text-2xl font-semibold mb-4">Select Pokémon</h2>
+        <CardContent className="p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">
+            Select Pokémon
+          </h2>
           <PokemonSelector onSelect={addToTeam} />
         </CardContent>
       </Card>
 
       <Card>
-        <CardContent className="p-6">
-          <h2 className="text-2xl font-semibold mb-4">Your Team</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <CardContent className="p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">Your Team</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {team.map((pokemon, index) => (
               <TeamMember
                 key={index}
@@ -47,7 +49,7 @@ const TeamBuilder: React.FC = () => {
             {[...Array(MAX_TEAM_SIZE - team.length)].map((_, index) => (
               <div
                 key={index}
-                className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg h-40 flex items-center justify-center text-gray-400 dark:text-gray-600"
+                className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg h-32 sm:h-40 flex items-center justify-center text-gray-400 dark:text-gray-600 text-sm sm:text-base"
               >
                 Empty Slot
               </div>

@@ -37,22 +37,22 @@ const typeColors: { [key: string]: string } = {
 const TeamMember: React.FC<TeamMemberProps> = ({ pokemon, onRemove }) => {
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-4 flex flex-col items-center">
+      <CardContent className="p-2 sm:p-4 flex flex-col items-center">
         <Image
           src={pokemon.sprites.front_default}
           alt={pokemon.name}
-          width={96}
-          height={96}
+          width={64}
+          height={64}
           className="pixelated"
         />
-        <h3 className="text-lg font-semibold mt-2 capitalize">
+        <h3 className="text-sm sm:text-base font-semibold mt-1 sm:mt-2 capitalize truncate w-full text-center">
           {pokemon.name}
         </h3>
-        <div className="flex space-x-2 mt-2">
+        <div className="flex flex-wrap justify-center gap-1 mt-1 sm:mt-2">
           {pokemon.types.map((type) => (
             <Badge
               key={type.type.name}
-              className={`${typeColors[type.type.name] || 'bg-gray-500'} text-white`}
+              className={`${typeColors[type.type.name] || 'bg-gray-500'} text-white text-xs`}
             >
               {type.type.name}
             </Badge>
@@ -62,7 +62,7 @@ const TeamMember: React.FC<TeamMemberProps> = ({ pokemon, onRemove }) => {
           onClick={onRemove}
           variant="destructive"
           size="sm"
-          className="mt-4"
+          className="mt-2 sm:mt-4 w-full text-xs sm:text-sm"
         >
           Remove
         </Button>

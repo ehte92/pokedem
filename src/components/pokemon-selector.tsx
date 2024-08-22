@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useQuery } from 'react-query';
 
 import { fetchPokemonDetails, fetchPokemonList } from '@/lib/api';
+import { typeColors } from '@/lib/constants';
 import { PokemonDetails, PokemonListItem } from '@/lib/types';
 
 import { Badge } from './ui/badge';
@@ -57,8 +58,8 @@ const PokemonSelector: React.FC<PokemonSelectorProps> = ({ onSelect }) => {
         onChange={(e) => setSearch(e.target.value)}
         className="w-full"
       />
-      <ScrollArea className="h-[400px] rounded-md border p-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <ScrollArea className="h-60 sm:h-80 rounded-md border p-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
           {filteredPokemon.map((pokemon: PokemonListItem) => {
             const pokemonId = getPokemonId(pokemon.url);
             return (
@@ -71,18 +72,18 @@ const PokemonSelector: React.FC<PokemonSelectorProps> = ({ onSelect }) => {
                 }`}
                 onClick={() => setSelectedPokemon(pokemon.name)}
               >
-                <CardContent className="p-4 flex flex-col items-center">
+                <CardContent className="p-2 sm:p-4 flex flex-col items-center">
                   <Image
                     src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`}
                     alt={pokemon.name}
-                    width={96}
-                    height={96}
+                    width={64}
+                    height={64}
                     className="pixelated"
                   />
-                  <p className="mt-2 text-sm font-semibold capitalize">
+                  <p className="mt-1 sm:mt-2 text-xs sm:text-sm font-semibold capitalize truncate w-full text-center">
                     {pokemon.name}
                   </p>
-                  <Badge variant="secondary" className="mt-1">
+                  <Badge variant="secondary" className="mt-1 text-xs">
                     #{pokemonId.padStart(3, '0')}
                   </Badge>
                 </CardContent>
@@ -92,8 +93,8 @@ const PokemonSelector: React.FC<PokemonSelectorProps> = ({ onSelect }) => {
         </div>
       </ScrollArea>
       {selectedPokemon && (
-        <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 sm:p-4 rounded-lg">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Image
               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${getPokemonId(
                 pokemonList?.results.find(
@@ -101,15 +102,15 @@ const PokemonSelector: React.FC<PokemonSelectorProps> = ({ onSelect }) => {
                 )?.url || ''
               )}.png`}
               alt={selectedPokemon}
-              width={64}
-              height={64}
+              width={48}
+              height={48}
               className="pixelated"
             />
-            <span className="text-lg font-semibold capitalize">
+            <span className="text-sm sm:text-lg font-semibold capitalize">
               {selectedPokemon}
             </span>
           </div>
-          <Button onClick={handleSelect} disabled={isLoading}>
+          <Button onClick={handleSelect} disabled={isLoading} size="sm">
             {isLoading ? 'Loading...' : 'Add to Team'}
           </Button>
         </div>
