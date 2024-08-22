@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { ChevronUp, Filter } from 'lucide-react';
+import Link from 'next/link';
 import { useInfiniteQuery } from 'react-query';
 import { useDebounce } from 'use-debounce';
 
@@ -134,7 +135,9 @@ const Pokedex: React.FC = () => {
         {data?.pages.map((page, i) => (
           <React.Fragment key={i}>
             {page.results.map((pokemon: PokemonListItem) => (
-              <PokemonListCard key={pokemon.name} pokemon={pokemon} />
+              <Link href={`/pokemon/${pokemon.name}`} key={pokemon.name}>
+                <PokemonListCard key={pokemon.name} pokemon={pokemon} />
+              </Link>
             ))}
           </React.Fragment>
         ))}
