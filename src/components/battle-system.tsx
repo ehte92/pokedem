@@ -11,6 +11,7 @@ import { MoveDetails, PokemonDetails } from '@/lib/types';
 
 import BattleArena from './battle-arena';
 import PokemonSwitcher from './pokemin-switcher';
+import TeamStatus from './team-status';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -57,15 +58,9 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
   );
 
   const renderTeamStatus = () => (
-    <div className="flex justify-between mb-2 text-sm sm:text-base">
-      <div>
-        <span className="font-bold">Your team:</span>{' '}
-        {userTeamState.filter((p) => p.currentHP > 0).length} Pokémon left
-      </div>
-      <div>
-        <span className="font-bold">AI team:</span>{' '}
-        {aiTeamState.filter((p) => p.currentHP > 0).length} Pokémon left
-      </div>
+    <div className="flex justify-between mb-4">
+      <TeamStatus team={userTeamState} isUserTeam={true} />
+      <TeamStatus team={aiTeamState} isUserTeam={false} />
     </div>
   );
 
