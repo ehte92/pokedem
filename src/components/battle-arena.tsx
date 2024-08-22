@@ -18,17 +18,19 @@ const BattleArena: React.FC<BattleArenaProps> = ({
 }) => {
   const renderPokemonInfo = (pokemon: PokemonBattleState, isUser: boolean) => (
     <div
-      className={`shadow-md rounded-lg p-3 ${isUser ? 'self-end' : 'self-start'} bg-white dark:bg-gray-800`}
+      className={`shadow-md rounded-lg p-2 ${isUser ? 'self-end' : 'self-start'} bg-white dark:bg-gray-800 text-xs sm:text-sm`}
     >
       <div className="flex justify-between items-center">
-        <span className="font-bold text-lg capitalize">{pokemon.name}</span>
-        <span className="text-sm text-gray-600 dark:text-gray-400">
+        <span className="font-bold capitalize truncate max-w-[70%]">
+          {pokemon.name}
+        </span>
+        <span className="text-gray-600 dark:text-gray-400">
           Lv{Math.floor(pokemon.base_experience / 10)}
         </span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
         <motion.div
-          className="h-2.5 rounded-full bg-green-500"
+          className="h-2 rounded-full bg-green-500"
           initial={{ width: '100%' }}
           animate={{
             width: `${(pokemon.currentHP / pokemon.stats.find((stat) => stat.stat.name === 'hp')?.base_stat!) * 100}%`,
@@ -36,15 +38,15 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           transition={{ duration: 0.5 }}
         />
       </div>
-      <div className="flex justify-between items-center mt-1">
-        <span className="text-sm text-gray-600 dark:text-gray-400">HP</span>
-        <span className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="flex justify-between items-center mt-1 text-[10px] sm:text-xs">
+        <span className="text-gray-600 dark:text-gray-400">HP</span>
+        <span className="text-gray-600 dark:text-gray-400">
           {pokemon.currentHP}/
           {pokemon.stats.find((stat) => stat.stat.name === 'hp')?.base_stat}
         </span>
       </div>
       {pokemon.status && (
-        <span className="text-sm text-red-500 mt-1 capitalize">
+        <span className="text-[10px] sm:text-xs text-red-500 mt-1 capitalize">
           {pokemon.status}
         </span>
       )}
@@ -68,8 +70,8 @@ const BattleArena: React.FC<BattleArenaProps> = ({
         <Image
           src={imageUrl}
           alt={pokemon.name}
-          width={isUser ? 200 : 180}
-          height={isUser ? 200 : 180}
+          width={isUser ? 120 : 100}
+          height={isUser ? 120 : 100}
           className={`drop-shadow-lg pixelated ${isUser ? '' : 'opponent-sprite'}`}
         />
       </motion.div>
@@ -77,50 +79,27 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   };
 
   return (
-    <div className="relative h-80 rounded-lg mb-6 overflow-hidden">
-      {/* Background layers */}
+    <div className="relative h-48 sm:h-64 rounded-lg mb-2 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-sky-400 to-sky-200" />
       <div className="absolute inset-0 bg-[url('/battle-bg-texture.png')] opacity-10" />
       <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-green-600 to-transparent" />
 
-      {/* Pokémon and info positioning */}
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute top-2 left-2 z-10 max-w-[45%]">
         {renderPokemonInfo(aiActivePokemon, false)}
       </div>
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-2 right-2 z-20">
         {renderPokemonImage(aiActivePokemon, false)}
       </div>
-      <div className="absolute bottom-4 right-4 z-10">
+      <div className="absolute bottom-2 right-2 z-10 max-w-[45%]">
         {renderPokemonInfo(userActivePokemon, true)}
       </div>
-      <div className="absolute bottom-4 left-4 z-20">
+      <div className="absolute bottom-2 left-2 z-20">
         {renderPokemonImage(userActivePokemon, true)}
       </div>
 
-      {/* Decorative elements */}
-      <div className="absolute top-1/4 left-1/4 w-8 h-8 bg-white rounded-full opacity-20 animate-ping" />
-      <div className="absolute bottom-1/3 right-1/3 w-6 h-6 bg-yellow-300 rounded-full opacity-30 animate-pulse" />
-      <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-blue-400 rounded-full opacity-25 animate-bounce" />
-
-      <style jsx>{`
-        .opponent-pokemon {
-          transform: translateY(-10px);
-          filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.2));
-        }
-        .opponent-sprite {
-          transform-origin: bottom;
-          animation: hover 3s ease-in-out infinite;
-        }
-        @keyframes hover {
-          0%,
-          100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-5px);
-          }
-        }
-      `}</style>
+      <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-white rounded-full opacity-20 animate-ping" />
+      <div className="absolute bottom-1/3 right-1/3 w-3 h-3 bg-yellow-300 rounded-full opacity-30 animate-pulse" />
+      <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-blue-400 rounded-full opacity-25 animate-bounce" />
     </div>
   );
 };
