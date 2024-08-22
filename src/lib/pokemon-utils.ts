@@ -23,7 +23,26 @@ export const estimateLevel = (pokemon: PokemonDetails): number => {
     (total, stat) => total + stat.base_stat,
     0
   );
-  return Math.min(100, Math.max(1, Math.floor(baseStatTotal / 6)));
+
+  // Factor in base experience
+  const experienceFactor = pokemon.base_experience / 200; // Normalize to a 0-1 range
+
+  // Consider evolution stage if available
+  const evolutionStageFactor = pokemon.evolutionStage
+    ? (pokemon.evolutionStage - 1) / 2
+    : 0;
+
+  // Calculate base level
+  let baseLevel = Math.floor(
+    (baseStatTotal / 6) * experienceFactor * (1 + evolutionStageFactor)
+  );
+
+  // Apply level range
+  const minLevel = Math.max(1, baseLevel - 5);
+  const maxLevel = Math.min(100, baseLevel + 5);
+
+  // Return a random level within the calculated range
+  return Math.floor(Math.random() * (maxLevel - minLevel + 1)) + minLevel;
 };
 
 export const initializePokemon = async (

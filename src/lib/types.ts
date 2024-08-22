@@ -45,6 +45,8 @@ export interface PokemonDetails {
   moves: PokemonMove[];
   sprites: PokemonSprites;
   base_experience: number;
+  evolutionStage?: number;
+  level: number;
 }
 
 export interface PokemonBattleState extends PokemonDetails {
