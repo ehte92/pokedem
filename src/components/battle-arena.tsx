@@ -65,7 +65,9 @@ const BattleArena: React.FC<BattleArenaProps> = ({
             ? { x: [0, 10, -10, 10, 0], transition: { duration: 0.5 } }
             : {}
         }
-        className={isUser ? '' : 'opponent-pokemon'}
+        className={`absolute ${
+          isUser ? 'bottom-[15%] left-[20%]' : 'top-[30%] right-[25%]'
+        } transform ${isUser ? 'scale-125' : 'scale-100'}`}
       >
         <Image
           src={imageUrl}
@@ -79,28 +81,44 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   };
 
   return (
-    <div className="relative h-48 sm:h-64 rounded-lg mb-2 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-sky-400 to-sky-200" />
-      <div className="absolute inset-0 bg-[url('/battle-bg-texture.png')] opacity-10" />
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-green-600 to-transparent" />
-
-      <div className="absolute top-2 left-2 z-10 max-w-[45%]">
-        {renderPokemonInfo(aiActivePokemon, false)}
-      </div>
-      <div className="absolute top-2 right-2 z-20">
+    <div
+      className="relative w-full rounded-lg mb-2"
+      style={{ paddingBottom: '56.25%' }}
+    >
+      <div className="absolute inset-0 bg-[url('/battle-bg-texture.png')] bg-cover bg-center rounded-lg overflow-hidden">
+        <div className="absolute top-2 left-2 z-10 max-w-[45%]">
+          {renderPokemonInfo(aiActivePokemon, false)}
+        </div>
         {renderPokemonImage(aiActivePokemon, false)}
-      </div>
-      <div className="absolute bottom-2 right-2 z-10 max-w-[45%]">
-        {renderPokemonInfo(userActivePokemon, true)}
-      </div>
-      <div className="absolute bottom-2 left-2 z-20">
+        <div className="absolute bottom-2 right-2 z-10 max-w-[45%]">
+          {renderPokemonInfo(userActivePokemon, true)}
+        </div>
         {renderPokemonImage(userActivePokemon, true)}
       </div>
-
-      <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-white rounded-full opacity-20 animate-ping" />
-      <div className="absolute bottom-1/3 right-1/3 w-3 h-3 bg-yellow-300 rounded-full opacity-30 animate-pulse" />
-      <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-blue-400 rounded-full opacity-25 animate-bounce" />
     </div>
+    // <div className="relative h-48 sm:h-64 rounded-lg mb-2 overflow-hidden">
+    //   <div className="absolute inset-0 bg-[url('/battle-bg-texture.png')] bg-cover bg-center" />
+    //   {/* <div className="absolute inset-0 bg-gradient-to-b from-sky-400 to-sky-200" />
+    //   <div className="absolute inset-0 bg-[url('/battle-bg-texture.png')] opacity-10" />
+    //   <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-green-600 to-transparent" /> */}
+
+    //   <div className="absolute top-2 left-2 z-10 max-w-[45%]">
+    //     {renderPokemonInfo(aiActivePokemon, false)}
+    //   </div>
+    //   <div className="absolute top-2 right-2 z-20">
+    //     {renderPokemonImage(aiActivePokemon, false)}
+    //   </div>
+    //   <div className="absolute bottom-2 right-2 z-10 max-w-[45%]">
+    //     {renderPokemonInfo(userActivePokemon, true)}
+    //   </div>
+    //   <div className="absolute bottom-2 left-2 z-20">
+    //     {renderPokemonImage(userActivePokemon, true)}
+    //   </div>
+
+    //   <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-white rounded-full opacity-20 animate-ping" />
+    //   <div className="absolute bottom-1/3 right-1/3 w-3 h-3 bg-yellow-300 rounded-full opacity-30 animate-pulse" />
+    //   <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-blue-400 rounded-full opacity-25 animate-bounce" />
+    // </div>
   );
 };
 
