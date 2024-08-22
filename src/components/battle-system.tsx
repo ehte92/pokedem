@@ -14,6 +14,7 @@ import PokemonSwitcher from './pokemin-switcher';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
+import { ScrollArea } from './ui/scroll-area';
 
 interface BattleSystemProps {
   userTeam: PokemonDetails[];
@@ -53,7 +54,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
   );
 
   const renderTeamStatus = () => (
-    <div className="flex justify-between mb-4">
+    <div className="flex justify-between mb-2 text-sm sm:text-base">
       <div>
         <span className="font-bold">Your team:</span>{' '}
         {userTeamState.filter((p) => p.currentHP > 0).length} Pokémon left
@@ -69,7 +70,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
     if (!userActivePokemon) return null;
 
     return (
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-2 mb-2">
         {userActivePokemon.moves.slice(0, 4).map((move, index) => {
           const moveDetails = moveQueries[index].data as
             | MoveDetails
@@ -80,11 +81,11 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
               key={move.move.name}
               onClick={() => handleUserMove(move.move.name)}
               disabled={!!userMove || battleState !== 'active'}
-              className="capitalize bg-blue-500 text-white hover:bg-blue-600 transition-colors flex flex-col items-start p-2 h-auto"
+              className="capitalize bg-blue-500 text-white hover:bg-blue-600 transition-colors flex flex-col items-start p-1 sm:p-2 h-auto text-xs sm:text-sm"
             >
-              <span>{move.move.name}</span>
-              <div className="flex justify-between w-full mt-1">
-                <span className="text-xs">
+              <span className="truncate w-full">{move.move.name}</span>
+              <div className="flex justify-between w-full mt-1 text-[10px] sm:text-xs">
+                <span>
                   PP: {move.pp}/{move.maxPp}
                 </span>
                 {moveDetails && (
@@ -93,7 +94,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
                       backgroundColor: getTypeColor(moveDetails.type.name),
                       color: 'white',
                     }}
-                    className="text-xs"
+                    className="text-[10px] sm:text-xs px-1 py-0"
                   >
                     {moveDetails.type.name}
                   </Badge>
@@ -107,13 +108,13 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
   };
 
   const renderBattleControls = () => (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
       <Button
         onClick={() => setIsSwitching(true)}
         disabled={!!userMove || battleState !== 'active'}
         className="bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
       >
-        Switch Pokémon
+        Switch
       </Button>
       <Button
         className="bg-red-500 text-white hover:bg-red-600 transition-colors"
@@ -126,23 +127,27 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
   );
 
   const renderBattleLog = () => (
-    <div className="mt-6 shadow-lg rounded-lg p-4 h-40 overflow-y-auto bg-white dark:bg-gray-800">
-      <h4 className="font-bold mb-2">Battle Log:</h4>
-      <AnimatePresence>
-        {battleLog.slice(-5).map((log, index) => (
-          <motion.p
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="mb-1 text-sm text-gray-600 dark:text-gray-400"
-          >
-            {log}
-          </motion.p>
-        ))}
-      </AnimatePresence>
-    </div>
+    <Card className="mt-2">
+      <CardContent className="p-2">
+        <h4 className="font-bold mb-1 text-sm">Battle Log:</h4>
+        <ScrollArea className="h-24 sm:h-32">
+          <AnimatePresence>
+            {battleLog.slice(-5).map((log, index) => (
+              <motion.p
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="mb-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400"
+              >
+                {log}
+              </motion.p>
+            ))}
+          </AnimatePresence>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 
   const handleNavigateHome = () => {
@@ -154,18 +159,18 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
     const isVictory = resultMessage.includes('You won the battle!');
 
     return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardContent className="text-center p-6">
-          <h2 className="text-3xl font-bold mb-4">
+      <Card className="w-full max-w-sm mx-auto">
+        <CardContent className="text-center p-4">
+          <h2 className="text-xl sm:text-2xl font-bold mb-2">
             {isVictory ? 'Victory!' : 'Defeat'}
           </h2>
-          <p className="text-xl mb-6">{resultMessage}</p>
-          <div className="flex justify-center space-x-4">
-            <Button onClick={onReset} className="px-6 py-3 text-lg">
-              Start New Battle
+          <p className="text-sm sm:text-base mb-4">{resultMessage}</p>
+          <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-2">
+            <Button onClick={onReset} className="text-sm">
+              New Battle
             </Button>
-            <Button onClick={handleNavigateHome} className="px-6 py-3 text-lg">
-              Return to Home
+            <Button onClick={handleNavigateHome} className="text-sm">
+              Home
             </Button>
           </div>
         </CardContent>
@@ -175,9 +180,9 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
 
   if (battleState === 'initializing') {
     return (
-      <Card className="w-full max-w-4xl mx-auto">
+      <Card className="w-full max-w-sm mx-auto">
         <CardContent>
-          <p className="text-center font-bold text-xl">
+          <p className="text-center font-bold text-lg">
             Initializing battle...
           </p>
         </CardContent>
@@ -191,17 +196,17 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
 
   if (!userActivePokemon || !aiActivePokemon) {
     return (
-      <Card className="w-full max-w-4xl mx-auto">
+      <Card className="w-full max-w-sm mx-auto">
         <CardContent>
-          <p className="text-center font-bold text-xl">Loading battle...</p>
+          <p className="text-center font-bold text-lg">Loading battle...</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto overflow-hidden">
-      <CardContent className="p-6">
+    <Card className="w-full max-w-lg mx-auto overflow-hidden">
+      <CardContent className="p-2 sm:p-4">
         {renderTeamStatus()}
         <BattleArena
           userActivePokemon={userActivePokemon}
@@ -213,6 +218,7 @@ const BattleSystem: React.FC<BattleSystemProps> = ({
             team={userTeamState.filter((p) => p.currentHP > 0)}
             activePokemon={userActivePokemon}
             onSwitch={handleSwitch}
+            onCancel={() => setIsSwitching(false)}
           />
         ) : (
           <>
