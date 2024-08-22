@@ -37,6 +37,9 @@ export const useBattleLogic = (
   const [userMove, setUserMove] = useState<string | null>(null);
   const [aiMove, setAiMove] = useState<string | null>(null);
   const [battleState, setBattleState] = useState<BattleState>('initializing');
+  const [statusChangeAnimation, setStatusChangeAnimation] = useState<
+    'user' | 'ai' | null
+  >(null);
 
   useEffect(() => {
     const initializeBattle = async () => {
@@ -416,7 +419,16 @@ export const useBattleLogic = (
         }
 
         // Apply move effects
-        turnLog.push(...handleMoveEffects(attacker, defender, moveDetails));
+        const moveEffects = handleMoveEffects(attacker, defender, moveDetails);
+        turnLog.push(...moveEffects);
+
+        // Check for status changes
+        if (moveEffects.some((effect) => effect.includes('is now'))) {
+          setStatusChangeAnimation(
+            defender === userActivePokemon ? 'user' : 'ai'
+          );
+          setTimeout(() => setStatusChangeAnimation(null), 1000);
+        }
       }
 
       // Handle post-move status effects
@@ -444,5 +456,6 @@ export const useBattleLogic = (
     userMove,
     battleState,
     handleBattleEnd,
+    statusChangeAnimation,
   };
 };

@@ -186,4 +186,18 @@
       transform: translateY(-5px);
     }
   }
+
+  @keyframes status-change {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .status-change {
+    animation: status-change 0.5s ease-in-out;
+  }
 }
