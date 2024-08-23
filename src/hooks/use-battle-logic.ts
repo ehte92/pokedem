@@ -78,6 +78,9 @@ export const useBattleLogic = (
 
   const handleUserMove = (moveName: string) => {
     setUserMove(moveName);
+    if (battleAI) {
+      battleAI.recordOpponentMove(moveName);
+    }
     handleAIMove();
   };
 
