@@ -5,6 +5,7 @@ import React, { useCallback, useState } from 'react';
 import { useQuery } from 'react-query';
 
 import BattleSystem from '@/components/battle-system';
+import LoadingSpinner from '@/components/loading-spinner';
 import TeamSelection from '@/components/team-selection';
 import { Button } from '@/components/ui/button';
 import { fetchPokemonDetails } from '@/lib/api';
@@ -17,13 +18,18 @@ const BattlePage: React.FC = () => {
   const [isTeamSelected, setIsTeamSelected] = useState(false);
   const [battleKey, setBattleKey] = useState(0);
 
-  const { data: allPokemon } = useQuery('allPokemon', async () => {
-    const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
-    const data = await response.json();
-    return data.results;
-  });
+  const { data: allPokemon, isLoading: isAllPokemonLoading } = useQuery(
+    'allPokemon',
+    async () => {
+      const response = await fetch(
+        'https://pokeapi.co/api/v2/pokemon?limit=151'
+      );
+      const data = await response.json();
+      return data.results;
+    }
+  );
 
-  const generateAITeam = async () => {
+  const generateAITeam = useCallback(async () => {
     if (allPokemon) {
       const team = [];
       for (let i = 0; i < 3; i++) {
@@ -34,17 +40,17 @@ const BattlePage: React.FC = () => {
       }
       setAiTeam(team);
     }
-  };
+  }, [allPokemon]);
 
-  const handleTeamSelected = (team: PokemonDetails[]) => {
+  const handleTeamSelected = useCallback((team: PokemonDetails[]) => {
     setUserTeam(team);
     setIsTeamSelected(true);
-  };
+  }, []);
 
-  const startBattle = async () => {
+  const startBattle = useCallback(async () => {
     await generateAITeam();
     setIsBattleStarted(true);
-  };
+  }, [generateAITeam]);
 
   const handleReset = useCallback(() => {
     setIsBattleStarted(false);
@@ -53,6 +59,14 @@ const BattlePage: React.FC = () => {
     setAiTeam([]);
     setBattleKey((prevKey) => prevKey + 1);
   }, []);
+
+  if (isAllPokemonLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <LoadingSpinner size="lg" message="Loading Pokémon data..." />
+      </div>
+    );
+  }
 
   if (!isTeamSelected) {
     return <TeamSelection onTeamSelected={handleTeamSelected} />;

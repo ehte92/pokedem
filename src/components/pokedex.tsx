@@ -10,6 +10,7 @@ import { fetchPokemonByType, fetchPokemonList, searchPokemon } from '@/lib/api';
 import { POKEMON_TYPES } from '@/lib/constants';
 import { PokemonListItem } from '@/lib/types';
 
+import LoadingSpinner from './loading-spinner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -80,6 +81,14 @@ const Pokedex: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [fetchNextPage, hasNextPage]);
+
+  if (isLoading) {
+    return <LoadingSpinner size="lg" message="Loading Pokémon..." />;
+  }
+
+  if (isError) {
+    return <p className="text-center text-red-500">Error loading Pokémon</p>;
+  }
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value === 'all' ? null : value);
@@ -163,7 +172,11 @@ const Pokedex: React.FC = () => {
       {hasNextPage && (
         <div className="mt-8 text-center">
           <Button onClick={() => fetchNextPage()} disabled={isLoading}>
-            Load More
+            {isLoading ? (
+              <LoadingSpinner size="sm" message="Loading more..." />
+            ) : (
+              'Load More'
+            )}
           </Button>
         </div>
       )}

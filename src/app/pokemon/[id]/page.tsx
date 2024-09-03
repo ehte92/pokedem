@@ -18,6 +18,7 @@ import { useParams } from 'next/navigation';
 import { useQuery } from 'react-query';
 
 import EvolutionChainComponent from '@/components/evolution-chain';
+import LoadingSpinner from '@/components/loading-spinner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -187,6 +188,24 @@ const PokemonDetailPage = () => {
       }
     }
   }, [allPokemon, pokemon]);
+
+  if (isPokemonLoading || isSpeciesLoading || isEvolutionLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <LoadingSpinner size="lg" message="Loading Pokémon details..." />
+      </div>
+    );
+  }
+
+  if (pokemonError || speciesError || evolutionError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-center text-red-500">
+          Error loading Pokémon details
+        </p>
+      </div>
+    );
+  }
 
   const calculateTypeEffectiveness = (types: string[]) => {
     let weaknesses = new Set<string>();
