@@ -7,8 +7,15 @@ import {
   ArrowLeft,
   ArrowLeftCircle,
   ArrowRight,
+  Crown,
+  Egg,
+  Heart,
+  Home,
   Ruler,
   Star,
+  Target,
+  TrendingUp,
+  Users,
   Weight,
   Zap,
 } from 'lucide-react';
@@ -19,6 +26,7 @@ import { useQuery } from 'react-query';
 
 import EvolutionChainComponent from '@/components/evolution-chain';
 import LoadingSpinner from '@/components/loading-spinner';
+import ToggleSwitch from '@/components/toggle-switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -112,6 +120,7 @@ const PokemonDetailPage = () => {
   const [selectedGen, setSelectedGen] = useState<string>('red');
   const [prevPokemon, setPrevPokemon] = useState<PokemonListItem | null>(null);
   const [nextPokemon, setNextPokemon] = useState<PokemonListItem | null>(null);
+  const [isShiny, setIsShiny] = useState(false);
 
   const { data: allPokemon } = useQuery<PokemonListItem[]>(
     'allPokemon',
@@ -288,9 +297,31 @@ const PokemonDetailPage = () => {
     );
   if (!pokemon || !species) return null;
 
+  // Helper function to calculate gender ratio
+  const getGenderRatio = (rate: number) => {
+    if (rate === -1) return 'Genderless';
+    const femaleRatio = (rate / 8) * 100;
+    return `${femaleRatio}% Female, ${100 - femaleRatio}% Male`;
+  };
+
   const { weaknesses, strengths } = calculateTypeEffectiveness(
     pokemon.types.map((t) => t.type.name)
   );
+
+  const getImageUrl = () => {
+    if (isShiny) {
+      return (
+        pokemon.sprites.other['official-artwork'].front_shiny ||
+        pokemon.sprites.front_shiny ||
+        pokemon.sprites.other['official-artwork'].front_default ||
+        pokemon.sprites.front_default
+      );
+    }
+    return (
+      pokemon.sprites.other['official-artwork'].front_default ||
+      pokemon.sprites.front_default
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -333,11 +364,8 @@ const PokemonDetailPage = () => {
             {/* Left side - Pokemon Image and Stats */}
             <div className="w-full md:w-1/3 bg-gray-100 dark:bg-gray-800 flex flex-col items-center p-4 sm:p-8">
               <Image
-                src={
-                  pokemon.sprites.other['official-artwork'].front_default ||
-                  pokemon.sprites.front_default
-                }
-                alt={pokemon.name}
+                src={getImageUrl()}
+                alt={`${pokemon.name}${isShiny ? ' (Shiny)' : ''}`}
                 width={250}
                 height={250}
                 className="object-contain mb-4 sm:mb-8"
@@ -378,6 +406,15 @@ const PokemonDetailPage = () => {
                 <span className="text-xl sm:text-2xl font-semibold text-gray-500">
                   #{pokemon.id.toString().padStart(3, '0')}
                 </span>
+              </div>
+
+              {/* Shiny Toggle */}
+              <div className="flex items-center space-x-2 mb-4">
+                <span className="text-sm font-semibold">Shiny</span>
+                <ToggleSwitch
+                  isOn={isShiny}
+                  onToggle={() => setIsShiny(!isShiny)}
+                />
               </div>
 
               <div className="mb-4 sm:mb-6">
@@ -531,6 +568,78 @@ const PokemonDetailPage = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* New Additional Details Section */}
+      <Card className="mt-6 overflow-hidden">
+        <CardContent className="p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">
+            Additional Details
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center">
+              <Egg className="w-5 h-5 mr-2 text-blue-500" />
+              <div>
+                <p className="text-sm text-gray-500">Egg Groups</p>
+                <p className="font-semibold capitalize">
+                  {species.egg_groups.map((group) => group.name).join(', ')}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <Target className="w-5 h-5 mr-2 text-green-500" />
+              <div>
+                <p className="text-sm text-gray-500">Catch Rate</p>
+                <p className="font-semibold">{species.capture_rate}</p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <Heart className="w-5 h-5 mr-2 text-red-500" />
+              <div>
+                <p className="text-sm text-gray-500">Base Friendship</p>
+                <p className="font-semibold">{species.base_happiness}</p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-purple-500" />
+              <div>
+                <p className="text-sm text-gray-500">Growth Rate</p>
+                <p className="font-semibold capitalize">
+                  {species.growth_rate.name}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <Home className="w-5 h-5 mr-2 text-yellow-500" />
+              <div>
+                <p className="text-sm text-gray-500">Habitat</p>
+                <p className="font-semibold capitalize">
+                  {species.habitat?.name || 'Unknown'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <Users className="w-5 h-5 mr-2 text-indigo-500" />
+              <div>
+                <p className="text-sm text-gray-500">Gender Ratio</p>
+                <p className="font-semibold">
+                  {getGenderRatio(species.gender_rate)}
+                </p>
+              </div>
+            </div>
+            {(species.is_legendary || species.is_mythical) && (
+              <div className="flex items-center">
+                <Crown className="w-5 h-5 mr-2 text-amber-500" />
+                <div>
+                  <p className="text-sm text-gray-500">Classification</p>
+                  <p className="font-semibold">
+                    {species.is_legendary ? 'Legendary' : 'Mythical'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
