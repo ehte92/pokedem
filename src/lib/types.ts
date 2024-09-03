@@ -26,10 +26,13 @@ export interface PokemonMove {
 
 export interface PokemonSprites {
   front_default: string;
+  front_shiny: string;
   back_default?: string;
+  back_shiny?: string;
   other: {
     'official-artwork': {
       front_default: string;
+      front_shiny: string;
     };
   };
 }
@@ -99,7 +102,14 @@ export interface PokemonSpecies {
     version: { name: string };
   }[];
   evolution_chain: { url: string };
-  // Add other fields as needed
+  egg_groups: { name: string }[];
+  capture_rate: number;
+  base_happiness: number;
+  growth_rate: { name: string };
+  habitat: { name: string } | null;
+  gender_rate: number;
+  is_legendary: boolean;
+  is_mythical: boolean;
 }
 
 export interface AbilityDetails {
