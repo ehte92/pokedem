@@ -1,11 +1,12 @@
 import React from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { usePokemonDetails } from '@/hooks/use-pokemon-details';
 import { typeColors } from '@/lib/constants';
+
+import LazyImage from './lazy-image';
 
 interface FeaturedPokemonProps {
   pokemonId: number;
@@ -37,7 +38,7 @@ const FeaturedPokemon: React.FC<FeaturedPokemonProps> = ({ pokemonId }) => {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-4 flex-grow flex flex-col justify-between">
             <div className="relative h-36 sm:h-40 md:h-48 flex items-center justify-center mb-2 sm:mb-4">
               {imageUrl && (
-                <Image
+                <LazyImage
                   src={imageUrl}
                   alt={details.name}
                   width={120}

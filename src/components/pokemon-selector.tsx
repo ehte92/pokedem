@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 
-import Image from 'next/image';
 import { useQuery } from 'react-query';
 
 import { fetchPokemonDetails, fetchPokemonList } from '@/lib/api';
-import { typeColors } from '@/lib/constants';
 import { PokemonDetails, PokemonListItem } from '@/lib/types';
 
+import LazyImage from './lazy-image';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -73,7 +72,7 @@ const PokemonSelector: React.FC<PokemonSelectorProps> = ({ onSelect }) => {
                 onClick={() => setSelectedPokemon(pokemon.name)}
               >
                 <CardContent className="p-2 sm:p-4 flex flex-col items-center">
-                  <Image
+                  <LazyImage
                     src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`}
                     alt={pokemon.name}
                     width={64}
@@ -92,10 +91,11 @@ const PokemonSelector: React.FC<PokemonSelectorProps> = ({ onSelect }) => {
           })}
         </div>
       </ScrollArea>
+
       {selectedPokemon && (
         <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 sm:p-4 rounded-lg">
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <Image
+            <LazyImage
               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${getPokemonId(
                 pokemonList?.results.find(
                   (p: PokemonListItem) => p.name === selectedPokemon

@@ -1,9 +1,10 @@
 import React from 'react';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import Image from 'next/image';
 
 import { PokemonBattleState } from '@/lib/types';
+
+import LazyImage from './lazy-image';
 
 interface BattleArenaProps {
   userActivePokemon: PokemonBattleState;
@@ -100,7 +101,7 @@ const BattleArena: React.FC<BattleArenaProps> = ({
             : 'top-[5%] right-[5%] sm:top-[20%] sm:right-[20%]'
         } transform ${isUser ? 'scale-100 sm:scale-125' : 'scale-75 sm:scale-100'}`}
       >
-        <Image
+        <LazyImage
           src={imageUrl}
           alt={pokemon.name}
           width={isUser ? 120 : 100}

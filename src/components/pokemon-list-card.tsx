@@ -1,10 +1,12 @@
 import React from 'react';
 
-import Image from 'next/image';
 import { useQuery } from 'react-query';
 
 import { fetchPokemonDetails } from '@/lib/api';
 import { PokemonDetails, PokemonListItem } from '@/lib/types';
+
+import LazyImage from './lazy-image';
+import { Badge } from './ui/badge';
 
 interface PokemonListCardProps {
   pokemon: PokemonListItem;
@@ -34,6 +36,7 @@ const typeColors = {
 const PokemonListCard: React.FC<PokemonListCardProps> = ({ pokemon }) => {
   const pokemonId = pokemon.url.split('/')[6];
   const imageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
+  const lowResImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon-mini/${pokemonId}.png`;
 
   const { data: pokemonDetails, isLoading } = useQuery<PokemonDetails>(
     ['pokemonDetails', pokemonId],
@@ -75,8 +78,9 @@ const PokemonListCard: React.FC<PokemonListCardProps> = ({ pokemon }) => {
         {/* Image */}
         <div className="relative w-32 h-32 mx-auto mb-4 group">
           <div className="absolute inset-0 bg-white rounded-full opacity-25 group-hover:animate-ping"></div>
-          <Image
+          <LazyImage
             src={imageUrl}
+            lowResSrc={lowResImageUrl}
             alt={pokemon.name}
             width={128}
             height={128}
@@ -92,7 +96,7 @@ const PokemonListCard: React.FC<PokemonListCardProps> = ({ pokemon }) => {
         ) : (
           <div className="flex justify-center gap-2 mb-2">
             {pokemonDetails?.types.map((type) => (
-              <span
+              <Badge
                 key={type.type.name}
                 className="px-2 py-1 rounded-full text-xs font-bold text-white shadow-md pixel-text uppercase"
                 style={{
@@ -101,7 +105,7 @@ const PokemonListCard: React.FC<PokemonListCardProps> = ({ pokemon }) => {
                 }}
               >
                 {type.type.name}
-              </span>
+              </Badge>
             ))}
           </div>
         )}

@@ -1,9 +1,8 @@
 import React from 'react';
 
-import Image from 'next/image';
-
 import { PokemonDetails } from '@/lib/types';
 
+import LazyImage from './lazy-image';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -38,7 +37,7 @@ const TeamMember: React.FC<TeamMemberProps> = ({ pokemon, onRemove }) => {
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-2 sm:p-4 flex flex-col items-center">
-        <Image
+        <LazyImage
           src={pokemon.sprites.front_default}
           alt={pokemon.name}
           width={64}
