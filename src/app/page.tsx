@@ -1,16 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { ArrowRight, Dna, Swords, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick-theme.css';
-import 'slick-carousel/slick/slick.css';
 
 import FeaturedPokemon from '@/components/featured-pokemon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 
 // Assuming there are 898 Pokémon in total (up to Generation 8)
 const TOTAL_POKEMON = 898;
@@ -36,42 +41,24 @@ const getRandomPokemonIds = () => {
 };
 
 const Home: React.FC = () => {
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [current, setCurrent] = React.useState(0);
+  const [count, setCount] = React.useState(0);
+
   const randomPokemonIds = React.useMemo(() => getRandomPokemonIds(), []);
 
-  const settings = {
-    className: 'center spotlight-carousel',
-    centerMode: true,
-    infinite: true,
-    centerPadding: '0px',
-    slidesToShow: 3,
-    speed: 500,
-    focusOnSelect: true,
-    dots: false,
-    arrows: true,
-    responsive: [
-      {
-        breakpoint: 1280,
-        settings: {
-          slidesToShow: 3,
-          centerPadding: '0px',
-        },
-      },
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 1,
-          centerPadding: '0px',
-        },
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 1,
-          centerPadding: '0px',
-        },
-      },
-    ],
-  };
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+
+    api.on('select', () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+  }, [api]);
 
   return (
     <div className="container mx-auto px-4 py-8 overflow-x-hidden">
@@ -99,14 +86,36 @@ const Home: React.FC = () => {
         <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">
           Featured Pokémon
         </h2>
-        <div className="spotlight-carousel-container">
-          <Slider {...settings}>
-            {randomPokemonIds.map((id) => (
-              <div key={id} className="px-2">
-                <FeaturedPokemon pokemonId={id} />
-              </div>
-            ))}
-          </Slider>
+        <div className="relative py-10">
+          <Carousel
+            opts={{
+              align: 'center',
+              loop: true,
+            }}
+            className="w-full max-w-5xl mx-auto"
+            setApi={setApi}
+          >
+            <CarouselContent>
+              {randomPokemonIds.map((id, index) => (
+                <CarouselItem
+                  key={id}
+                  className="sm:basis-1/2 lg:basis-1/3 pl-4"
+                >
+                  <div
+                    className={`p-1 transition-all duration-300 transform ${
+                      index === current
+                        ? 'scale-105 z-10'
+                        : 'scale-95 opacity-70'
+                    }`}
+                  >
+                    <FeaturedPokemon pokemonId={id} />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-2 sm:left-4" />
+            <CarouselNext className="right-2 sm:right-4" />
+          </Carousel>
         </div>
       </section>
 
