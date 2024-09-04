@@ -90,6 +90,9 @@ const config = {
       borderWidth: {
         '6': '6px',
       },
+      screens: {
+        xs: '480px',
+      },
     },
   },
   variants: {
