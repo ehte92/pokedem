@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -19,6 +19,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { TYPE_EFFECTIVENESS } from '@/lib/constants';
+
+import TypeChart from './type-chart';
+import { Input } from './ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 const POKEMON_TYPES = [
   'Normal',
@@ -49,369 +54,6 @@ type TypeEffectiveness = {
   [key in PokemonType]: {
     [key in PokemonType]: Effectiveness;
   };
-};
-
-const TYPE_EFFECTIVENESS: TypeEffectiveness = {
-  Normal: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 1,
-    Fighting: 2,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 1,
-    Ghost: 0,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 1,
-    Fairy: 1,
-  },
-  Fire: {
-    Normal: 1,
-    Fire: 0.5,
-    Water: 2,
-    Electric: 1,
-    Grass: 0.5,
-    Ice: 0.5,
-    Fighting: 1,
-    Poison: 1,
-    Ground: 2,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 0.5,
-    Rock: 2,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 0.5,
-    Fairy: 0.5,
-  },
-  Water: {
-    Normal: 1,
-    Fire: 0.5,
-    Water: 0.5,
-    Electric: 2,
-    Grass: 2,
-    Ice: 0.5,
-    Fighting: 1,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 1,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 0.5,
-    Fairy: 1,
-  },
-  Electric: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 0.5,
-    Grass: 0.5,
-    Ice: 1,
-    Fighting: 1,
-    Poison: 1,
-    Ground: 0,
-    Flying: 2,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 1,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 1,
-    Fairy: 1,
-  },
-  Grass: {
-    Normal: 1,
-    Fire: 2,
-    Water: 0.5,
-    Electric: 1,
-    Grass: 0.5,
-    Ice: 2,
-    Fighting: 1,
-    Poison: 2,
-    Ground: 0.5,
-    Flying: 2,
-    Psychic: 1,
-    Bug: 2,
-    Rock: 1,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 1,
-    Fairy: 1,
-  },
-  Ice: {
-    Normal: 1,
-    Fire: 2,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 0.5,
-    Fighting: 1,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 2,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 2,
-    Fairy: 1,
-  },
-  Fighting: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 1,
-    Fighting: 1,
-    Poison: 1,
-    Ground: 1,
-    Flying: 2,
-    Psychic: 2,
-    Bug: 0.5,
-    Rock: 0.5,
-    Ghost: 0,
-    Dragon: 1,
-    Dark: 0.5,
-    Steel: 1,
-    Fairy: 2,
-  },
-  Poison: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 1,
-    Grass: 0.5,
-    Ice: 1,
-    Fighting: 1,
-    Poison: 0.5,
-    Ground: 2,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 0.5,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 0,
-    Fairy: 2,
-  },
-  Ground: {
-    Normal: 1,
-    Fire: 1,
-    Water: 2,
-    Electric: 2,
-    Grass: 0.5,
-    Ice: 1,
-    Fighting: 1,
-    Poison: 0.5,
-    Ground: 1,
-    Flying: 0,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 2,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 2,
-    Fairy: 1,
-  },
-  Flying: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 0.5,
-    Grass: 0.5,
-    Ice: 2,
-    Fighting: 0.5,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 0.5,
-    Rock: 2,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 1,
-    Fairy: 1,
-  },
-  Psychic: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 1,
-    Fighting: 0.5,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 0.5,
-    Bug: 2,
-    Rock: 1,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 2,
-    Steel: 0.5,
-    Fairy: 1,
-  },
-  Bug: {
-    Normal: 1,
-    Fire: 2,
-    Water: 1,
-    Electric: 1,
-    Grass: 0.5,
-    Ice: 1,
-    Fighting: 0.5,
-    Poison: 1,
-    Ground: 1,
-    Flying: 2,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 1,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 1,
-    Fairy: 0.5,
-  },
-  Rock: {
-    Normal: 1,
-    Fire: 0.5,
-    Water: 2,
-    Electric: 1,
-    Grass: 1,
-    Ice: 1,
-    Fighting: 2,
-    Poison: 1,
-    Ground: 0.5,
-    Flying: 0.5,
-    Psychic: 1,
-    Bug: 2,
-    Rock: 1,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 2,
-    Fairy: 1,
-  },
-  Ghost: {
-    Normal: 0,
-    Fire: 1,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 1,
-    Fighting: 1,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 2,
-    Bug: 1,
-    Rock: 1,
-    Ghost: 2,
-    Dragon: 1,
-    Dark: 0.5,
-    Steel: 1,
-    Fairy: 1,
-  },
-  Dragon: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 1,
-    Fighting: 1,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 1,
-    Ghost: 1,
-    Dragon: 2,
-    Dark: 1,
-    Steel: 0.5,
-    Fairy: 0,
-  },
-  Dark: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 1,
-    Fighting: 2,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 0,
-    Bug: 1,
-    Rock: 1,
-    Ghost: 2,
-    Dragon: 1,
-    Dark: 0.5,
-    Steel: 1,
-    Fairy: 0.5,
-  },
-  Steel: {
-    Normal: 1,
-    Fire: 2,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 0.5,
-    Fighting: 1,
-    Poison: 1,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 2,
-    Ghost: 1,
-    Dragon: 1,
-    Dark: 1,
-    Steel: 0.5,
-    Fairy: 2,
-  },
-  Fairy: {
-    Normal: 1,
-    Fire: 1,
-    Water: 1,
-    Electric: 1,
-    Grass: 1,
-    Ice: 1,
-    Fighting: 0.5,
-    Poison: 0.5,
-    Ground: 1,
-    Flying: 1,
-    Psychic: 1,
-    Bug: 1,
-    Rock: 1,
-    Ghost: 1,
-    Dragon: 2,
-    Dark: 2,
-    Steel: 0.5,
-    Fairy: 1,
-  },
 };
 
 const typeColors: { [key in PokemonType]: string } = {
@@ -500,6 +142,8 @@ const EffectivenessBadge: React.FC<{
 const TypeEffectivenessCalculator: React.FC = () => {
   const [selectedType1, setSelectedType1] = useState<PokemonType | ''>('');
   const [selectedType2, setSelectedType2] = useState<PokemonType | ''>('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('offensive');
 
   const renderTypeList = (
     types: PokemonType[],
@@ -596,142 +240,258 @@ const TypeEffectivenessCalculator: React.FC = () => {
     };
   };
 
+  const filteredTypes = useMemo(() => {
+    return POKEMON_TYPES.filter((type) =>
+      type.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm]);
+
+  const renderDefensiveEffectiveness = () => {
+    if (!selectedType1) return null;
+
+    const effectiveness = selectedType2
+      ? getDualTypeEffectiveness(selectedType1, selectedType2)
+      : getTypeEffectiveness(selectedType1);
+
+    return (
+      <div className="space-y-4">
+        {renderTypeList(effectiveness.immuneTo, 0, 'Takes no damage from')}
+        {renderTypeList(
+          effectiveness.superResistant,
+          0.25,
+          'Takes ¼ damage from'
+        )}
+        {renderTypeList(effectiveness.resistant, 0.5, 'Takes ½ damage from')}
+        {renderTypeList(effectiveness.weakTo, 2, 'Takes 2× damage from')}
+        {renderTypeList(effectiveness.superWeakTo, 4, 'Takes 4× damage from')}
+      </div>
+    );
+  };
+
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-center text-xl sm:text-2xl">
-          Type Effectiveness Calculator
+        <CardTitle className="text-center text-lg sm:text-xl md:text-2xl">
+          Pokémon Type Calculator
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <Select
-            onValueChange={(value: PokemonType) => setSelectedType1(value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select first type" />
-            </SelectTrigger>
-            <SelectContent>
-              {POKEMON_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            onValueChange={(value: PokemonType | 'none') =>
-              setSelectedType2(value === 'none' ? '' : value)
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select second type (optional)" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {POKEMON_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <AnimatePresence>
-          {selectedType1 && (
-            <motion.div
-              key={`${selectedType1}-${selectedType2}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="mt-6"
+      <CardContent className="p-2 sm:p-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger
+              value="offensive"
+              className="text-[10px] xs:text-xs sm:text-sm px-1 py-1 xs:px-2 xs:py-2"
             >
-              <h2 className="text-lg sm:text-xl font-bold mb-4 text-center">
-                <motion.span
-                  className={`inline-block ${typeColors[selectedType1]} text-white px-2 py-1 rounded`}
+              <span className="block xs:hidden">Off</span>
+              <span className="hidden xs:block">Offensive</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="defensive"
+              className="text-[10px] xs:text-xs sm:text-sm px-1 py-1 xs:px-2 xs:py-2"
+            >
+              <span className="block xs:hidden">Def</span>
+              <span className="hidden xs:block">Defensive</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="chart"
+              className="text-[10px] xs:text-xs sm:text-sm px-1 py-1 xs:px-2 xs:py-2"
+            >
+              <span className="block xs:hidden">Chart</span>
+              <span className="hidden xs:block">Type Chart</span>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="offensive">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4 mb-4">
+              <Select
+                onValueChange={(value: PokemonType) => setSelectedType1(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select first type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <div className="mb-2 px-2">
+                    <Input
+                      placeholder="Search types..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="mb-2"
+                    />
+                  </div>
+                  {filteredTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                onValueChange={(value: PokemonType | 'none') =>
+                  setSelectedType2(value === 'none' ? '' : value)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select second type (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {POKEMON_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <AnimatePresence>
+              {selectedType1 && (
+                <motion.div
+                  key={`${selectedType1}-${selectedType2}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                  className="mt-4"
                 >
-                  {selectedType1}
-                </motion.span>
-                {selectedType2 && (
-                  <>
-                    <span className="mx-2">/</span>
+                  <h2 className="text-base sm:text-lg font-bold mb-2 sm:mb-4 text-center">
                     <motion.span
-                      className={`inline-block ${typeColors[selectedType2]} text-white px-2 py-1 rounded`}
+                      className={`inline-block ${typeColors[selectedType1]} text-white px-2 py-1 rounded text-xs sm:text-sm`}
                     >
-                      {selectedType2}
+                      {selectedType1}
                     </motion.span>
-                  </>
-                )}
-                <span className="block mt-2">Type Effectiveness</span>
-              </h2>
-              <div className="space-y-6">
-                {selectedType2
-                  ? (() => {
-                      const effectiveness = getDualTypeEffectiveness(
-                        selectedType1,
-                        selectedType2
-                      );
-                      return (
-                        <>
-                          {renderTypeList(
-                            effectiveness.immuneTo,
-                            0,
-                            'Immune to'
-                          )}
-                          {renderTypeList(
-                            effectiveness.superResistant,
-                            0.25,
-                            'Super Resistant to'
-                          )}
-                          {renderTypeList(
-                            effectiveness.resistant,
-                            0.5,
-                            'Resistant to'
-                          )}
-                          {renderTypeList(effectiveness.weakTo, 2, 'Weak to')}
-                          {renderTypeList(
-                            effectiveness.superWeakTo,
-                            4,
-                            'Super Weak to'
-                          )}
-                        </>
-                      );
-                    })()
-                  : (() => {
-                      const effectiveness = getTypeEffectiveness(selectedType1);
-                      return (
-                        <>
-                          {renderTypeList(
-                            effectiveness.immuneTo,
-                            0,
-                            'Immune to'
-                          )}
-                          {renderTypeList(
-                            effectiveness.superResistant,
-                            0.25,
-                            'Super Resistant to'
-                          )}
-                          {renderTypeList(
-                            effectiveness.resistant,
-                            0.5,
-                            'Resistant to'
-                          )}
-                          {renderTypeList(effectiveness.weakTo, 2, 'Weak to')}
-                          {renderTypeList(
-                            effectiveness.superWeakTo,
-                            4,
-                            'Super Weak to'
-                          )}
-                        </>
-                      );
-                    })()}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                    {selectedType2 && (
+                      <>
+                        <span className="mx-1 sm:mx-2">/</span>
+                        <motion.span
+                          className={`inline-block ${typeColors[selectedType2]} text-white px-2 py-1 rounded text-xs sm:text-sm`}
+                        >
+                          {selectedType2}
+                        </motion.span>
+                      </>
+                    )}
+                    <span className="block mt-1 sm:mt-2 text-sm sm:text-base">
+                      Type Effectiveness
+                    </span>
+                  </h2>
+                  <div className="space-y-3 sm:space-y-6">
+                    {selectedType2
+                      ? (() => {
+                          const effectiveness = getDualTypeEffectiveness(
+                            selectedType1,
+                            selectedType2
+                          );
+                          return (
+                            <>
+                              {renderTypeList(
+                                effectiveness.immuneTo,
+                                0,
+                                'No effect against'
+                              )}
+                              {renderTypeList(
+                                effectiveness.superResistant,
+                                0.25,
+                                'Not very effective (¼×)'
+                              )}
+                              {renderTypeList(
+                                effectiveness.resistant,
+                                0.5,
+                                'Not very effective (½×)'
+                              )}
+                              {renderTypeList(
+                                effectiveness.weakTo,
+                                2,
+                                'Super effective (2×)'
+                              )}
+                              {renderTypeList(
+                                effectiveness.superWeakTo,
+                                4,
+                                'Super effective (4×)'
+                              )}
+                            </>
+                          );
+                        })()
+                      : (() => {
+                          const effectiveness =
+                            getTypeEffectiveness(selectedType1);
+                          return (
+                            <>
+                              {renderTypeList(
+                                effectiveness.immuneTo,
+                                0,
+                                'No effect against'
+                              )}
+                              {renderTypeList(
+                                effectiveness.superResistant,
+                                0.25,
+                                'Not very effective (¼×)'
+                              )}
+                              {renderTypeList(
+                                effectiveness.resistant,
+                                0.5,
+                                'Not very effective (½×)'
+                              )}
+                              {renderTypeList(
+                                effectiveness.weakTo,
+                                2,
+                                'Super effective (2×)'
+                              )}
+                              {renderTypeList(
+                                effectiveness.superWeakTo,
+                                4,
+                                'Super effective (4×)'
+                              )}
+                            </>
+                          );
+                        })()}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </TabsContent>
+          <TabsContent value="defensive">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4 mb-4">
+              <Select
+                onValueChange={(value: PokemonType) => setSelectedType1(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select first type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {POKEMON_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                onValueChange={(value: PokemonType | 'none') =>
+                  setSelectedType2(value === 'none' ? '' : value)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select second type (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {POKEMON_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {renderDefensiveEffectiveness()}
+          </TabsContent>
+          <TabsContent value="chart">
+            <div className="mt-4">
+              <TypeChart />
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
