@@ -3,8 +3,6 @@ import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
-  ArrowDownRight,
-  ArrowUpRight,
   Brain,
   Bug,
   Cog,
@@ -16,13 +14,10 @@ import {
   Ghost,
   Heart,
   Leaf,
-  Maximize2,
-  Minimize2,
   Moon,
   Mountain,
   Repeat,
   RotateCcw,
-  Shield,
   ShieldAlert,
   Skull,
   Snowflake,
@@ -97,6 +92,27 @@ const typeIcons: { [key: string]: React.ReactNode } = {
   fairy: <Heart className="w-5 h-5 text-pink-400" />,
 };
 
+const typeThemes: { [key: string]: string } = {
+  normal: 'bg-gray-100 dark:bg-gray-800',
+  fire: 'bg-red-50 dark:bg-red-900',
+  water: 'bg-blue-50 dark:bg-blue-900',
+  electric: 'bg-yellow-50 dark:bg-yellow-900',
+  grass: 'bg-green-50 dark:bg-green-900',
+  ice: 'bg-blue-50 dark:bg-blue-900',
+  fighting: 'bg-red-50 dark:bg-red-900',
+  poison: 'bg-purple-50 dark:bg-purple-900',
+  ground: 'bg-yellow-50 dark:bg-yellow-900',
+  flying: 'bg-indigo-50 dark:bg-indigo-900',
+  psychic: 'bg-pink-50 dark:bg-pink-900',
+  bug: 'bg-green-50 dark:bg-green-900',
+  rock: 'bg-yellow-50 dark:bg-yellow-900',
+  ghost: 'bg-purple-50 dark:bg-purple-900',
+  dragon: 'bg-indigo-50 dark:bg-indigo-900',
+  dark: 'bg-gray-200 dark:bg-gray-900',
+  steel: 'bg-gray-100 dark:bg-gray-800',
+  fairy: 'bg-pink-50 dark:bg-pink-900',
+};
+
 const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
   move,
   isOpen,
@@ -144,15 +160,26 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
         {icon}
         <p className="text-sm font-semibold ml-2">{label}</p>
       </div>
-      <Progress
-        value={value}
-        max={max}
-        className={`h-2 ${getStatColor(value, max)}`}
-      />
-      <p className="text-sm mt-1">
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: '100%' }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <Progress
+          value={value}
+          max={max}
+          className={`h-2 ${getStatColor(value, max)}`}
+        />
+      </motion.div>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.7 }}
+        className="text-sm mt-1"
+      >
         {value ?? 'N/A'}
         {label === 'Accuracy' && value ? '%' : ''}
-      </p>
+      </motion.p>
     </div>
   );
 
@@ -165,13 +192,18 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center p-2 bg-gray-100 dark:bg-gray-800 rounded-lg cursor-default">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className={`flex items-center p-2 ${typeThemes[move.type.name]} rounded-lg cursor-default`}
+          >
             {icon}
             <div className="ml-2">
               <p className="text-sm font-semibold">{label}</p>
               <p className="text-sm">{value}</p>
             </div>
-          </div>
+          </motion.div>
         </TooltipTrigger>
         <TooltipContent
           side="top"
@@ -196,14 +228,19 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
         >
           <motion.div
             ref={modalRef}
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className={`${typeThemes[move.type.name]} rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto`}
             variants={modal}
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold capitalize flex items-center">
+              <motion.h2
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-2xl font-bold capitalize flex items-center"
+              >
                 {typeIcons[move.type.name]}
                 <span className="ml-2">{move.name.replace('-', ' ')}</span>
-              </h2>
+              </motion.h2>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -214,7 +251,12 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
               </motion.button>
             </div>
 
-            <div className="flex space-x-2 mb-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex space-x-2 mb-4"
+            >
               <Badge
                 className={`${typeColors[move.type.name]} text-white text-sm`}
               >
@@ -223,7 +265,7 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
               <Badge variant="outline" className="text-sm">
                 {move.damage_class.name}
               </Badge>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               {renderStatBar(
@@ -240,7 +282,12 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="grid grid-cols-3 gap-4 mb-6"
+            >
               {renderInfoItem(
                 'PP',
                 move.pp,
@@ -259,16 +306,21 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
                 <Crosshair className="w-6 h-6 text-green-500" />,
                 'Specifies which Pokémon this move can affect'
               )}
-            </div>
+            </motion.div>
 
             <Separator className="my-6" />
 
-            <div className="mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="mb-6"
+            >
               <h3 className="text-lg font-semibold mb-2 flex items-center">
                 <Sparkles className="w-5 h-5 mr-2 text-purple-500" />
                 Effect
               </h3>
-              <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
+              <div className={`${typeThemes[move.type.name]} p-3 rounded-lg`}>
                 <p className="text-sm">{move.effect_entries[0]?.effect}</p>
               </div>
               {move.effect_chance && (
@@ -280,12 +332,16 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
                   </p>
                 </div>
               )}
-            </div>
+            </motion.div>
 
             {move.meta && (
               <>
                 <Separator className="my-6" />
-                <div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                >
                   <h3 className="text-lg font-semibold mb-2 flex items-center">
                     <Cog className="w-5 h-5 mr-2 text-gray-500" />
                     Additional Info
@@ -327,7 +383,7 @@ const MoveDetailsModal: React.FC<MoveDetailsModalProps> = ({
                         'Stages added to critical hit ratio'
                       )}
                   </div>
-                </div>
+                </motion.div>
               </>
             )}
           </motion.div>
