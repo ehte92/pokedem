@@ -118,19 +118,34 @@ export const fetchAllMoves = async (): Promise<MoveDetails[]> => {
 
 export const fetchMoves = async (
   page: number,
-  limit: number = 20
+  limit: number = 20,
+  type: string = 'all',
+  category: string = 'all',
+  searchTerm: string = ''
 ): Promise<{ moves: MoveDetails[]; totalCount: number }> => {
   const offset = (page - 1) * limit;
-  const response = await fetch(
-    `https://pokeapi.co/api/v2/move?offset=${offset}&limit=${limit}`
-  );
+  let url = `https://pokeapi.co/api/v2/move?offset=${offset}&limit=${limit}`;
+
+  const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch moves');
   const data = await response.json();
 
-  const movePromises = data.results.map((move: { url: string }) =>
-    fetch(move.url).then((res) => res.json())
+  let moves = await Promise.all(
+    data.results.map((move: { url: string }) =>
+      fetch(move.url).then((res) => res.json())
+    )
   );
 
-  const moves = await Promise.all(movePromises);
+  // Apply filters
+  moves = moves.filter((move) => {
+    const typeMatch = type === 'all' || move.type.name === type;
+    const categoryMatch =
+      category === 'all' || move.damage_class.name === category;
+    const searchMatch =
+      searchTerm === '' ||
+      move.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return typeMatch && categoryMatch && searchMatch;
+  });
+
   return { moves, totalCount: data.count };
 };
