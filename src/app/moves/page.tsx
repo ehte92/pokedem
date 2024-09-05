@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ChevronUp } from 'lucide-react';
-import { useQuery } from 'react-query';
+import { ChevronUp, Keyboard } from 'lucide-react';
 import { useDebounce } from 'use-debounce';
 
 import LoadingSpinner from '@/components/loading-spinner';
@@ -12,10 +11,21 @@ import MovesList from '@/components/moves-list';
 import PaginationControls from '@/components/pagination-controls';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { fetchMoves } from '@/lib/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useCachedMoves } from '@/hooks/use-cached-moves';
 import { MoveDetails } from '@/lib/types';
-
-const ITEMS_PER_PAGE = 20;
 
 const MovesPage: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -25,38 +35,63 @@ const MovesPage: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [animationKey, setAnimationKey] = useState(0);
 
-  const { data, isLoading, error, refetch } = useQuery(
-    ['moves', filters, currentPage],
-    () =>
-      fetchMoves(
-        currentPage,
-        ITEMS_PER_PAGE,
-        filters.type,
-        filters.category,
-        filters.searchTerm
-      ),
-    {
-      keepPreviousData: true,
-    }
-  );
+  const { allMoves, isLoading, error } = useCachedMoves();
 
-  const [debouncedRefetch] = useDebounce(
-    useCallback(() => {
-      setCurrentPage(1);
-      refetch();
-    }, [refetch]),
-    300
-  );
+  const [debouncedFilters] = useDebounce(filters, 300);
+
+  const filteredMoves = useMemo(() => {
+    if (!allMoves) return [];
+    return allMoves.filter((move) => {
+      const typeMatch =
+        debouncedFilters.type === 'all' ||
+        move.type.name === debouncedFilters.type;
+      const categoryMatch =
+        debouncedFilters.category === 'all' ||
+        move.damage_class.name === debouncedFilters.category;
+      const searchMatch =
+        debouncedFilters.searchTerm === '' ||
+        move.name
+          .toLowerCase()
+          .includes(debouncedFilters.searchTerm.toLowerCase());
+      return typeMatch && categoryMatch && searchMatch;
+    });
+  }, [allMoves, debouncedFilters]);
+
+  const paginatedMoves = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredMoves.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredMoves, currentPage, itemsPerPage]);
+
+  const totalCount = filteredMoves.length;
+
+  useEffect(() => {
+    setAnimationKey((prev) => prev + 1);
+    setIsLoadingMore(false);
+  }, [paginatedMoves]);
 
   const handleFilterChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
-    debouncedRefetch();
+    setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    scrollToTop();
+  const handlePageChange = useCallback(
+    (page: number) => {
+      if (page >= 1 && page <= Math.ceil(totalCount / itemsPerPage)) {
+        setIsLoadingMore(true);
+        setCurrentPage(page);
+        scrollToTop();
+      }
+    },
+    [totalCount, itemsPerPage]
+  );
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1);
   };
 
   const scrollToTop = () => {
@@ -72,6 +107,29 @@ const MovesPage: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return; // Don't handle key events when focus is in an input or textarea
+      }
+
+      switch (event.key) {
+        case 'ArrowLeft':
+          handlePageChange(currentPage - 1);
+          break;
+        case 'ArrowRight':
+          handlePageChange(currentPage + 1);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPage, handlePageChange]);
+
   if (isLoading) {
     return <LoadingSpinner size="lg" message="Loading moves data..." />;
   }
@@ -81,10 +139,8 @@ const MovesPage: React.FC = () => {
       <Alert variant="destructive">
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          {error instanceof Error
-            ? error.message
-            : 'An error occurred while loading moves data.'}
-          <Button onClick={() => refetch()} className="mt-2">
+          An error occurred while loading moves data: {(error as Error).message}
+          <Button onClick={() => window.location.reload()} className="mt-2">
             Try Again
           </Button>
         </AlertDescription>
@@ -92,7 +148,7 @@ const MovesPage: React.FC = () => {
     );
   }
 
-  const totalPages = data ? Math.ceil(data.totalCount / ITEMS_PER_PAGE) : 0;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
     <div className="container mx-auto px-4 py-8 relative">
@@ -100,13 +156,48 @@ const MovesPage: React.FC = () => {
         Pokémon Moves Database
       </h1>
       <MovesFilter filters={filters} setFilters={handleFilterChange} />
-      {data && data.moves.length > 0 ? (
+      <div className="flex justify-between items-center mb-4">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center text-sm text-gray-500 cursor-help">
+                <Keyboard className="w-4 h-4 mr-1" />
+                Keyboard navigation
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Use left and right arrow keys to navigate between pages</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <Select
+          value={itemsPerPage.toString()}
+          onValueChange={handleItemsPerPageChange}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Items per page" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="10">10 per page</SelectItem>
+            <SelectItem value="20">20 per page</SelectItem>
+            <SelectItem value="50">50 per page</SelectItem>
+            <SelectItem value="100">100 per page</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {isLoadingMore && (
+        <div className="text-center my-4">
+          <LoadingSpinner size="sm" message="Loading more moves..." />
+        </div>
+      )}
+      {paginatedMoves.length > 0 ? (
         <>
-          <MovesList moves={data.moves} />
+          <MovesList key={animationKey} moves={paginatedMoves} />
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
+            isLoading={isLoadingMore}
           />
         </>
       ) : (
