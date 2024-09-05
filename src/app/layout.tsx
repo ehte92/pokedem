@@ -28,6 +28,7 @@ const navItems = [
   { href: '/pokedex', label: 'Pokédex' },
   { href: '/team-builder', label: 'Team Builder' },
   { href: '/battle', label: 'Battle' },
+  { href: '/moves', label: 'Moves' }, // Add this line
 ];
 
 export default function RootLayout({
