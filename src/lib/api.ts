@@ -103,3 +103,15 @@ export const fetchMoveDetails = async (
   if (!response.ok) throw new Error('Failed to fetch move details');
   return response.json();
 };
+
+export const fetchAllMoves = async (): Promise<MoveDetails[]> => {
+  const response = await fetch('https://pokeapi.co/api/v2/move?limit=1000');
+  if (!response.ok) throw new Error('Failed to fetch moves');
+  const data = await response.json();
+
+  const movePromises = data.results.map((move: { url: string }) =>
+    fetch(move.url).then((res) => res.json())
+  );
+
+  return Promise.all(movePromises);
+};
