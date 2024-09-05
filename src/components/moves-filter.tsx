@@ -27,14 +27,16 @@ interface MovesFilterProps {
 }
 
 const MovesFilter: React.FC<MovesFilterProps> = ({ filters, setFilters }) => {
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
   return (
     <div className="mb-6 space-y-4">
       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
         <Select
           value={filters.type}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, type: value }))
-          }
+          onValueChange={(value) => handleFilterChange('type', value)}
         >
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Select type" />
@@ -51,9 +53,7 @@ const MovesFilter: React.FC<MovesFilterProps> = ({ filters, setFilters }) => {
 
         <Select
           value={filters.category}
-          onValueChange={(value) =>
-            setFilters((prev) => ({ ...prev, category: value }))
-          }
+          onValueChange={(value) => handleFilterChange('category', value)}
         >
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Select category" />
@@ -71,9 +71,7 @@ const MovesFilter: React.FC<MovesFilterProps> = ({ filters, setFilters }) => {
         type="text"
         placeholder="Search moves..."
         value={filters.searchTerm}
-        onChange={(e) =>
-          setFilters((prev) => ({ ...prev, searchTerm: e.target.value }))
-        }
+        onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
         className="w-full"
       />
     </div>
