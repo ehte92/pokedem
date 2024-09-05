@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useQuery } from 'react-query';
 
@@ -20,12 +20,21 @@ const MovesPage: React.FC = () => {
     searchTerm: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [filteredMoves, setFilteredMoves] = useState<MoveDetails[]>([]);
 
   const { data, isLoading, error } = useQuery(
-    ['moves', currentPage],
-    () => fetchMoves(currentPage, ITEMS_PER_PAGE),
+    ['moves', filters.type, filters.category, filters.searchTerm],
+    () =>
+      fetchMoves(1, 1000, filters.type, filters.category, filters.searchTerm),
     { keepPreviousData: true }
   );
+
+  useEffect(() => {
+    if (data) {
+      setFilteredMoves(data.moves);
+      setCurrentPage(1);
+    }
+  }, [data]);
 
   if (isLoading)
     return <LoadingSpinner size="lg" message="Loading moves data..." />;
@@ -35,18 +44,11 @@ const MovesPage: React.FC = () => {
     );
   if (!data) return null;
 
-  const { moves, totalCount } = data;
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-
-  const filteredMoves = moves.filter((move) => {
-    return (
-      (filters.type === 'all' || move.type.name === filters.type) &&
-      (filters.category === 'all' ||
-        move.damage_class.name === filters.category) &&
-      (filters.searchTerm === '' ||
-        move.name.toLowerCase().includes(filters.searchTerm.toLowerCase()))
-    );
-  });
+  const totalPages = Math.ceil(filteredMoves.length / ITEMS_PER_PAGE);
+  const paginatedMoves = filteredMoves.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -58,7 +60,7 @@ const MovesPage: React.FC = () => {
         Pokémon Moves Database
       </h1>
       <MovesFilter filters={filters} setFilters={setFilters} />
-      <MovesList moves={filteredMoves} />
+      <MovesList moves={paginatedMoves} />
       <PaginationControls
         currentPage={currentPage}
         totalPages={totalPages}
