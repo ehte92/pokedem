@@ -17,18 +17,12 @@ interface MovesFilterProps {
     category: string;
     searchTerm: string;
   };
-  setFilters: React.Dispatch<
-    React.SetStateAction<{
-      type: string;
-      category: string;
-      searchTerm: string;
-    }>
-  >;
+  setFilters: (filters: MovesFilterProps['filters']) => void;
 }
 
 const MovesFilter: React.FC<MovesFilterProps> = ({ filters, setFilters }) => {
   const handleFilterChange = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters({ ...filters, [key]: value });
   };
 
   return (
