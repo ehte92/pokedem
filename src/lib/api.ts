@@ -115,3 +115,22 @@ export const fetchAllMoves = async (): Promise<MoveDetails[]> => {
 
   return Promise.all(movePromises);
 };
+
+export const fetchMoves = async (
+  page: number,
+  limit: number = 20
+): Promise<{ moves: MoveDetails[]; totalCount: number }> => {
+  const offset = (page - 1) * limit;
+  const response = await fetch(
+    `https://pokeapi.co/api/v2/move?offset=${offset}&limit=${limit}`
+  );
+  if (!response.ok) throw new Error('Failed to fetch moves');
+  const data = await response.json();
+
+  const movePromises = data.results.map((move: { url: string }) =>
+    fetch(move.url).then((res) => res.json())
+  );
+
+  const moves = await Promise.all(movePromises);
+  return { moves, totalCount: data.count };
+};
