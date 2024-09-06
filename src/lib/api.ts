@@ -48,7 +48,8 @@ export const fetchEvolutionChain = async (
     handleApiError(error, 'Failed to fetch evolution chain');
     return {
       chain: {
-        species: { name: 'Unknown' },
+        species: { name: 'Unknown', url: '' },
+        evolution_details: [],
         evolves_to: [],
       },
     };
@@ -187,3 +188,40 @@ export const fetchMoves = async (
     throw new Error('Failed to fetch moves');
   }
 };
+
+export async function fetchLegendaryPokemon(): Promise<PokemonDetails[]> {
+  try {
+    // Fetch all Pokémon species
+    const response = await fetch(
+      'https://pokeapi.co/api/v2/pokemon-species?limit=1000'
+    );
+    if (!response.ok) {
+      throw new Error('Failed to fetch Pokémon species');
+    }
+    const data = await response.json();
+
+    // Filter for legendary Pokémon
+    const legendarySpecies = await Promise.all(
+      data.results.map(async (species: { url: string }) => {
+        const speciesData = await fetchPokemonSpecies(
+          species.url.split('/').slice(-2, -1)[0]
+        );
+        return speciesData.is_legendary ? speciesData : null;
+      })
+    );
+
+    // Fetch details for each legendary Pokémon
+    const legendaryPokemon = await Promise.all(
+      legendarySpecies
+        .filter((species: PokemonSpecies | null) => species !== null)
+        .map((species: PokemonSpecies) =>
+          fetchPokemonDetails(species.id.toString())
+        )
+    );
+
+    return legendaryPokemon;
+  } catch (error) {
+    handleApiError(error, 'Failed to fetch legendary Pokémon');
+    return [];
+  }
+}
