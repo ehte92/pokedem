@@ -1,20 +1,26 @@
 export interface PokemonType {
+  slot: number;
   type: {
     name: string;
+    url: string;
   };
 }
 
 export interface PokemonAbility {
   ability: {
     name: string;
+    url: string;
   };
   is_hidden: boolean;
+  slot: number;
 }
 
 export interface PokemonStat {
   base_stat: number;
+  effort: number;
   stat: {
     name: string;
+    url: string;
   };
 }
 
@@ -47,6 +53,7 @@ export interface PokemonDetails {
   stats: PokemonStat[];
   moves: PokemonMove[];
   sprites: PokemonSprites;
+  species?: PokemonSpecies;
   base_experience: number;
   evolutionStage?: number;
   level: number;
@@ -81,35 +88,58 @@ export interface EvolutionDetail {
 export interface EvolutionTo {
   species: {
     name: string;
+    url: string;
   };
-  evolution_details: EvolutionDetail[];
+  evolution_details: EvolutionDetails[];
   evolves_to: EvolutionTo[];
+}
+
+export interface EvolutionDetails {
+  min_level: number;
+  trigger: {
+    name: string;
+    url: string;
+  };
+  // Add other evolution details as needed
 }
 
 export interface EvolutionChain {
   chain: {
     species: {
       name: string;
+      url: string;
     };
+    evolution_details: EvolutionDetails[];
     evolves_to: EvolutionTo[];
   };
 }
 
 export interface PokemonSpecies {
+  id: number;
+  name: string;
+  is_legendary: boolean;
   flavor_text_entries: {
     flavor_text: string;
-    language: { name: string };
-    version: { name: string };
+    language: {
+      name: string;
+      url: string;
+    };
+    version: {
+      name: string;
+      url: string;
+    };
   }[];
-  evolution_chain: { url: string };
-  egg_groups: { name: string }[];
-  capture_rate: number;
-  base_happiness: number;
-  growth_rate: { name: string };
-  habitat: { name: string } | null;
-  gender_rate: number;
-  is_legendary: boolean;
-  is_mythical: boolean;
+  habitat: {
+    name: string;
+    url: string;
+  } | null;
+  evolution_chain: {
+    url: string;
+  };
+  generation: {
+    name: string;
+    url: string;
+  };
 }
 
 export interface AbilityDetails {
