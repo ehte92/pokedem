@@ -6,6 +6,7 @@ import { ArrowRight, Dna, Swords, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 import FeaturedPokemon from '@/components/featured-pokemon';
+import LegendaryPokemonShowcase from '@/components/legendary-pokemon-showcase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -117,6 +118,11 @@ const Home: React.FC = () => {
             <CarouselNext className="right-2 sm:right-4" />
           </Carousel>
         </div>
+      </section>
+
+      {/* Legendary Pokémon Showcase */}
+      <section className="mb-16">
+        <LegendaryPokemonShowcase />
       </section>
 
       {/* Features Section */}
