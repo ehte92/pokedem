@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -17,78 +17,58 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  fetchEvolutionChain,
-  fetchLegendaryPokemon,
-  fetchPokemonSpecies,
-} from '@/lib/api';
-import {
-  EvolutionChain,
-  EvolutionTo,
-  PokemonDetails,
-  PokemonSpecies,
-} from '@/lib/types';
+  useEvolutionChain,
+  usePokemonSpecies,
+} from '@/hooks/pokemon-detail-hooks';
+import { useLegendaryPokemon } from '@/hooks/use-legendary-pokemon';
+import { modalVariants, tabContentVariants } from '@/lib/animation-variants';
+import { EvolutionChain, EvolutionTo, PokemonDetails } from '@/lib/types';
+
+import SkeletonLoader from './skeleton-loader';
 
 const LegendaryPokemonPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPokemon, setSelectedPokemon] = useState<PokemonDetails | null>(
+  const [selectedPokemonId, setSelectedPokemonId] = useState<number | null>(
     null
   );
-  const [legendaryPokemon, setLegendaryPokemon] = useState<PokemonDetails[]>(
-    []
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [evolutionChain, setEvolutionChain] = useState<EvolutionChain | null>(
-    null
-  );
+  const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const data = await fetchLegendaryPokemon();
-        setLegendaryPokemon(data);
-      } catch (err) {
-        setError('Failed to fetch legendary Pokémon. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const {
+    data: legendaryPokemon,
+    isLoading,
+    error,
+    refetch: refetchLegendaryPokemon,
+  } = useLegendaryPokemon();
 
-    fetchData();
-  }, []);
+  const {
+    data: selectedPokemonSpecies,
+    error: speciesError,
+    isLoading: isLoadingSpecies,
+  } = usePokemonSpecies(selectedPokemonId || 0);
 
-  const filteredPokemon = legendaryPokemon.filter(
-    (pokemon) =>
-      pokemon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pokemon.types.some((type) =>
-        type.type.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-  );
+  const {
+    data: evolutionChain,
+    error: evolutionError,
+    isLoading: isLoadingEvolution,
+  } = useEvolutionChain(selectedPokemonSpecies?.evolution_chain?.url || '');
 
-  const handlePokemonSelect = async (pokemon: PokemonDetails) => {
-    try {
-      const speciesData = await fetchPokemonSpecies(pokemon.id);
-      const updatedPokemon = { ...pokemon, species: speciesData };
-      setSelectedPokemon(updatedPokemon);
+  const filteredPokemon =
+    legendaryPokemon?.filter(
+      (pokemon) =>
+        pokemon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pokemon.types.some((type) =>
+          type.type.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    ) || [];
 
-      if (speciesData.evolution_chain) {
-        const evolutionData = await fetchEvolutionChain(
-          speciesData.evolution_chain.url
-        );
-        setEvolutionChain(evolutionData);
-      } else {
-        setEvolutionChain(null);
-      }
-    } catch (err) {
-      console.error('Failed to fetch Pokémon data:', err);
-    }
+  const handlePokemonSelect = (pokemon: PokemonDetails) => {
+    setSelectedPokemonId(pokemon.id);
+    setActiveTab('overview');
   };
 
   const renderEvolutionChain = (chain: EvolutionChain['chain']) => {
@@ -127,8 +107,19 @@ const LegendaryPokemonPage: React.FC = () => {
   }
 
   if (error) {
-    return <div className="text-center text-red-500">{error}</div>;
+    return (
+      <div className="text-center">
+        <p className="text-red-500 mb-4">{error.message}</p>
+        <Button onClick={() => refetchLegendaryPokemon()}>
+          <RefreshCw className="mr-2 h-4 w-4" /> Retry
+        </Button>
+      </div>
+    );
   }
+
+  const selectedPokemon =
+    legendaryPokemon?.find((p) => p.id === selectedPokemonId) || null;
+  const isLoadingModalData = isLoadingSpecies || isLoadingEvolution;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -197,157 +188,201 @@ const LegendaryPokemonPage: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      <Dialog
-        open={!!selectedPokemon}
-        onOpenChange={() => setSelectedPokemon(null)}
-      >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          {selectedPokemon && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-3xl font-bold capitalize">
-                  {selectedPokemon.name}
-                </DialogTitle>
-                <DialogDescription>Legendary Pokémon Details</DialogDescription>
-              </DialogHeader>
-              <Tabs defaultValue="overview" className="mt-6">
-                <TabsList>
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="stats">Stats</TabsTrigger>
-                  <TabsTrigger value="evolution">Evolution</TabsTrigger>
-                  <TabsTrigger value="moves">Moves</TabsTrigger>
-                </TabsList>
-                <TabsContent value="overview">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Image
-                        src={
-                          selectedPokemon.sprites.other?.['official-artwork']
-                            .front_default ||
-                          selectedPokemon.sprites.front_default
-                        }
-                        alt={selectedPokemon.name}
-                        width={300}
-                        height={300}
-                        objectFit="contain"
-                      />
-                      <div className="mt-4">
-                        <h4 className="font-semibold mb-2">Type:</h4>
-                        {selectedPokemon.types.map((type) => (
-                          <Badge
-                            key={type.type.name}
-                            className="mr-2 mb-2 capitalize"
-                          >
-                            {type.type.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p>
-                        <strong>Height:</strong> {selectedPokemon.height / 10} m
-                      </p>
-                      <p>
-                        <strong>Weight:</strong> {selectedPokemon.weight / 10}{' '}
-                        kg
-                      </p>
-                      <p>
-                        <strong>Abilities:</strong>{' '}
-                        {selectedPokemon.abilities
-                          .map((a) => a.ability.name)
-                          .join(', ')}
-                      </p>
-                      {selectedPokemon.species && (
-                        <>
-                          <h4 className="font-semibold mt-4 mb-2">
-                            Pokédex Entry:
-                          </h4>
-                          <p className="text-sm mb-4">
-                            {
-                              selectedPokemon.species.flavor_text_entries.find(
-                                (entry) => entry.language.name === 'en'
-                              )?.flavor_text
-                            }
-                          </p>
-                          <p>
-                            <strong>Habitat:</strong>{' '}
-                            {selectedPokemon.species.habitat?.name || 'Unknown'}
-                          </p>
-                          <p>
-                            <strong>Generation:</strong>{' '}
-                            {selectedPokemon.species.generation.name}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="stats">
-                  <h4 className="font-semibold mb-4">Base Stats:</h4>
-                  {selectedPokemon.stats.map((stat) => (
-                    <div key={stat.stat.name} className="mb-4">
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm font-medium capitalize">
-                          {stat.stat.name}
-                        </span>
-                        <span className="text-sm font-medium">
-                          {stat.base_stat}
-                        </span>
-                      </div>
-                      <Progress
-                        value={stat.base_stat}
-                        max={255}
-                        className="h-2"
-                      />
-                    </div>
-                  ))}
-                </TabsContent>
-                <TabsContent value="evolution">
-                  {evolutionChain ? (
-                    <div className="mt-4">
-                      <h4 className="font-semibold mb-4">Evolution Chain:</h4>
-                      {renderEvolutionChain(evolutionChain.chain)}
-                    </div>
-                  ) : (
-                    <p>No evolution data available for this Pokémon.</p>
-                  )}
-                </TabsContent>
-                <TabsContent value="moves">
-                  <h4 className="font-semibold mb-4">Moves:</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                    {selectedPokemon.moves.slice(0, 20).map((move) => (
-                      <Badge
-                        key={move.move.name}
-                        variant="secondary"
-                        className="capitalize"
+      <AnimatePresence>
+        {selectedPokemon && (
+          <Dialog
+            open={!!selectedPokemon}
+            onOpenChange={() => setSelectedPokemonId(null)}
+          >
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <motion.div
+                variants={modalVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <DialogHeader>
+                  <DialogTitle className="text-3xl font-bold capitalize">
+                    {selectedPokemon.name}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Legendary Pokémon Details
+                  </DialogDescription>
+                </DialogHeader>
+                {isLoadingModalData ? (
+                  <SkeletonLoader />
+                ) : (
+                  <Tabs
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                    className="mt-6"
+                  >
+                    <TabsList>
+                      <TabsTrigger value="overview">Overview</TabsTrigger>
+                      <TabsTrigger value="stats">Stats</TabsTrigger>
+                      <TabsTrigger value="evolution">Evolution</TabsTrigger>
+                      <TabsTrigger value="moves">Moves</TabsTrigger>
+                    </TabsList>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeTab}
+                        variants={tabContentVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
                       >
-                        {move.move.name.replace('-', ' ')}
-                      </Badge>
-                    ))}
-                  </div>
-                  {selectedPokemon.moves.length > 20 && (
-                    <p className="mt-4 text-sm text-gray-500">
-                      Showing first 20 moves. This Pokémon can learn{' '}
-                      {selectedPokemon.moves.length} moves in total.
-                    </p>
-                  )}
-                </TabsContent>
-              </Tabs>
-              <div className="mt-6 text-sm text-gray-500">
-                <a
-                  href={`https://bulbapedia.bulbagarden.net/wiki/${selectedPokemon.name}_(Pok%C3%A9mon)`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center hover:text-blue-500"
-                >
-                  Learn more on Bulbapedia{' '}
-                  <ExternalLink size={16} className="ml-1" />
-                </a>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+                        <TabsContent value="overview">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <Image
+                                src={
+                                  selectedPokemon.sprites.other?.[
+                                    'official-artwork'
+                                  ].front_default ||
+                                  selectedPokemon.sprites.front_default
+                                }
+                                alt={selectedPokemon.name}
+                                width={300}
+                                height={300}
+                                objectFit="contain"
+                              />
+                              <div className="mt-4">
+                                <h4 className="font-semibold mb-2">Type:</h4>
+                                {selectedPokemon.types.map((type) => (
+                                  <Badge
+                                    key={type.type.name}
+                                    className="mr-2 mb-2 capitalize"
+                                  >
+                                    {type.type.name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <p>
+                                <strong>Height:</strong>{' '}
+                                {selectedPokemon.height / 10} m
+                              </p>
+                              <p>
+                                <strong>Weight:</strong>{' '}
+                                {selectedPokemon.weight / 10} kg
+                              </p>
+                              <p>
+                                <strong>Abilities:</strong>{' '}
+                                {selectedPokemon.abilities
+                                  .map((a) => a.ability.name)
+                                  .join(', ')}
+                              </p>
+                              {speciesError ? (
+                                <p className="text-red-500">
+                                  Failed to load species data.
+                                </p>
+                              ) : (
+                                selectedPokemonSpecies && (
+                                  <>
+                                    <h4 className="font-semibold mt-4 mb-2">
+                                      Pokédex Entry:
+                                    </h4>
+                                    <p className="text-sm mb-4">
+                                      {
+                                        selectedPokemonSpecies.flavor_text_entries.find(
+                                          (entry) =>
+                                            entry.language.name === 'en'
+                                        )?.flavor_text
+                                      }
+                                    </p>
+                                    <p>
+                                      <strong>Habitat:</strong>{' '}
+                                      {selectedPokemonSpecies.habitat?.name ||
+                                        'Unknown'}
+                                    </p>
+                                    <p>
+                                      <strong>Generation:</strong>{' '}
+                                      {selectedPokemonSpecies.generation.name}
+                                    </p>
+                                  </>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="stats">
+                          <h4 className="font-semibold mb-4">Base Stats:</h4>
+                          {selectedPokemon.stats.map((stat) => (
+                            <div key={stat.stat.name} className="mb-4">
+                              <div className="flex justify-between mb-1">
+                                <span className="text-sm font-medium capitalize">
+                                  {stat.stat.name}
+                                </span>
+                                <span className="text-sm font-medium">
+                                  {stat.base_stat}
+                                </span>
+                              </div>
+                              <Progress
+                                value={stat.base_stat}
+                                max={255}
+                                className="h-2"
+                              />
+                            </div>
+                          ))}
+                        </TabsContent>
+                        <TabsContent value="evolution">
+                          {evolutionError ? (
+                            <p className="text-red-500">
+                              Failed to load evolution data. Please try again
+                              later.
+                            </p>
+                          ) : evolutionChain ? (
+                            <div className="mt-4">
+                              <h4 className="font-semibold mb-4">
+                                Evolution Chain:
+                              </h4>
+                              {renderEvolutionChain(evolutionChain.chain)}
+                            </div>
+                          ) : (
+                            <p>No evolution data available for this Pokémon.</p>
+                          )}
+                        </TabsContent>
+                        <TabsContent value="moves">
+                          <h4 className="font-semibold mb-4">Moves:</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            {selectedPokemon.moves.slice(0, 20).map((move) => (
+                              <Badge
+                                key={move.move.name}
+                                variant="secondary"
+                                className="capitalize"
+                              >
+                                {move.move.name.replace('-', ' ')}
+                              </Badge>
+                            ))}
+                          </div>
+                          {selectedPokemon.moves.length > 20 && (
+                            <p className="mt-4 text-sm text-gray-500">
+                              Showing first 20 moves. This Pokémon can learn{' '}
+                              {selectedPokemon.moves.length} moves in total.
+                            </p>
+                          )}
+                        </TabsContent>
+                      </motion.div>
+                    </AnimatePresence>
+                  </Tabs>
+                )}
+                <div className="mt-6 text-sm text-gray-500">
+                  <a
+                    href={`https://bulbapedia.bulbagarden.net/wiki/${selectedPokemon.name}_(Pok%C3%A9mon)`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center hover:text-blue-500"
+                  >
+                    Learn more on Bulbapedia{' '}
+                    <ExternalLink size={16} className="ml-1" />
+                  </a>
+                </div>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
