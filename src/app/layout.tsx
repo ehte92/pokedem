@@ -1,13 +1,12 @@
-import { Menu } from 'lucide-react';
 import type { Metadata } from 'next';
 import { Inter as FontSans } from 'next/font/google';
-import Link from 'next/link';
 import 'slick-carousel/slick/slick-theme.css';
 import 'slick-carousel/slick/slick.css';
 
-import ThemeToggle from '@/components/theme-toggle';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  EnhancedFooter,
+  EnhancedNavigation,
+} from '@/components/enhanced-navigation';
 
 import { Document } from './Document';
 import { NextLoader } from './NextLoader';
@@ -19,17 +18,11 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: 'Pokémon App',
-  description: 'Explore the world of Pokémon',
+  title: 'PokéDem - Your Ultimate Pokémon Companion',
+  description:
+    'Explore, battle, and master the world of Pokémon with our comprehensive toolkit',
+  keywords: 'Pokemon, Pokedex, Team Builder, Battle Simulator, Type Calculator',
 };
-
-const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/pokedex', label: 'Pokédex' },
-  { href: '/team-builder', label: 'Team Builder' },
-  { href: '/battle', label: 'Battle' },
-  { href: '/moves', label: 'Moves' }, // Add this line
-];
 
 export default function RootLayout({
   children,
@@ -39,56 +32,25 @@ export default function RootLayout({
   return (
     <Document>
       <NextLoader />
-      <div className="flex flex-col min-h-screen">
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-14 items-center justify-between">
-            <div className="flex items-center">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
-                  >
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle Menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="pr-0">
-                  <nav className="flex flex-col space-y-3">
-                    {navItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="block px-2 py-1 text-lg"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </nav>
-                </SheetContent>
-              </Sheet>
-              <div className="hidden md:flex">
-                <nav className="flex items-center space-x-6 text-sm font-medium">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="transition-colors hover:text-foreground/80 text-foreground"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <ThemeToggle />
-            </div>
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        {/* Enhanced Navigation */}
+        <EnhancedNavigation />
+
+        {/* Enhanced Main Content */}
+        <main className="flex-1 relative">
+          {/* Subtle background pattern */}
+          <div className="absolute inset-0 opacity-5 pointer-events-none">
+            <div className="absolute top-10 left-10 w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
+            <div className="absolute top-32 right-20 w-3 h-3 bg-purple-500 rounded-full animate-pulse delay-1000" />
+            <div className="absolute bottom-20 left-1/4 w-2 h-2 bg-yellow-500 rounded-full animate-pulse delay-2000" />
+            <div className="absolute bottom-40 right-1/3 w-3 h-3 bg-green-500 rounded-full animate-pulse delay-500" />
           </div>
-        </header>
-        <main className="flex-grow container mx-auto px-4 py-8">
-          {children}
+
+          <div className="relative z-10">{children}</div>
         </main>
+
+        {/* Enhanced Footer */}
+        <EnhancedFooter />
       </div>
     </Document>
   );

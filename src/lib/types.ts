@@ -118,6 +118,7 @@ export interface PokemonSpecies {
   id: number;
   name: string;
   is_legendary: boolean;
+  is_mythical?: boolean;
   flavor_text_entries: {
     flavor_text: string;
     language: {
@@ -140,6 +141,17 @@ export interface PokemonSpecies {
     name: string;
     url: string;
   };
+  egg_groups?: {
+    name: string;
+    url: string;
+  }[];
+  capture_rate?: number;
+  base_happiness?: number;
+  growth_rate?: {
+    name: string;
+    url: string;
+  };
+  gender_rate?: number;
 }
 
 export interface AbilityDetails {
@@ -242,4 +254,75 @@ export interface PokemonBattleState extends Omit<PokemonDetails, 'moves'> {
     evasion: number;
   };
   moves: PokemonBattleMove[];
+}
+
+// Enhanced API types
+export interface ApiResponse<T> {
+  data: T;
+  loading: boolean;
+  error: string | null;
+  lastFetched: number;
+}
+
+export interface ApiCacheOptions {
+  ttl?: number; // Time to live in milliseconds
+  force?: boolean; // Force refresh
+  background?: boolean; // Fetch in background
+}
+
+export interface BatchRequestOptions {
+  batchSize?: number;
+  concurrency?: number;
+  retries?: number;
+  timeout?: number;
+}
+
+export interface ApiMetrics {
+  requestCount: number;
+  cacheHits: number;
+  cacheMisses: number;
+  averageResponseTime: number;
+  errorRate: number;
+  lastReset: number;
+}
+
+export interface RequestDebounceOptions {
+  delay: number;
+  maxWait?: number;
+  leading?: boolean;
+  trailing?: boolean;
+}
+
+// Enhanced error types
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status?: number,
+    public response?: Response,
+    public retryable: boolean = true
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export class NetworkError extends ApiError {
+  constructor(message: string = 'Network request failed') {
+    super(message, undefined, undefined, true);
+    this.name = 'NetworkError';
+  }
+}
+
+export class TimeoutError extends ApiError {
+  constructor(message: string = 'Request timeout') {
+    super(message, 408, undefined, true);
+    this.name = 'TimeoutError';
+  }
+}
+
+export class ValidationError extends ApiError {
+  constructor(message: string = 'Invalid request data') {
+    super(message, 400, undefined, false);
+    this.name = 'ValidationError';
+  }
 }
